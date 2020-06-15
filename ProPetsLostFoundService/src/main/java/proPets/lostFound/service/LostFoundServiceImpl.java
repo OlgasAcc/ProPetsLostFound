@@ -3,16 +3,21 @@ package proPets.lostFound.service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.DataFormatException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.AccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.FoundRepository;
+import proPets.lostFound.dao.LostFoundRepository;
 import proPets.lostFound.dao.LostRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
+import proPets.lostFound.dto.PostEditDto;
+import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Photo;
 import proPets.lostFound.model.Post;
@@ -23,10 +28,7 @@ import proPets.lostFound.model.PostLost;
 public class LostFoundServiceImpl implements LostFoundService {
 
 	@Autowired
-	LostRepository lostRepository;
-	
-	@Autowired
-	FoundRepository foundRepository;
+	LostFoundRepository lostFoundRepository;
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
@@ -42,6 +44,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 							.authorName(newPostDto.getAuthorName())
 							.build();
 		Post post = Post.builder()
+				.flag(flag)
 				.type(newPostDto.getType())
 				.breed(newPostDto.getBreed())
 				.color(newPostDto.getColor())
@@ -53,20 +56,12 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.authorData(authorData)
 				.dateOfPublish(LocalDateTime.now())
 				.build();
-		if (flag.equalsIgnoreCase("lost")) {
-			PostLost newPostLost = new PostLost(post);
-			lostRepository.save(newPostLost);
-			return convertPostToPostDto(newPostLost.getPost(), newPostLost.getId());
-		}
-		if (flag.equalsIgnoreCase("found")) {
-			PostFound newPostFound = new PostFound(post);
-			foundRepository.save(newPostFound);
-			return convertPostToPostDto(newPostFound.getPost(),newPostFound.getId());
-		}
-		return null;
+
+			lostFoundRepository.save(post);
+			return convertPostToPostDto(post);
 	}
 		
-	private Set<String> createSetOfDistinctiveFeatures(String newFeaturesStr) { // receives String, splites with komas,
+	private Set<String> createSetOfDistinctiveFeatures(String newFeaturesStr) { // gets String, splites with komas,
 		// removes beginning and ending white spaces
 		Set<String> distinctiveFeatures = new HashSet<>();
 		String[] features = newFeaturesStr.split(",");
@@ -88,25 +83,23 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return set;
 	}
 
-//	@Override
-//	public PostDto removePost(String currentUserId, String postId) throws Throwable {
-//		try {
-//			PostLost post = messagingRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-//			if (currentUserId.equalsIgnoreCase(post.getAuthorId())) {
-//				messagingRepository.delete(post);
-//				return convertPostToPostDto(post);
-//			} else
-//				throw new AccessException("Access denied: you'r not author!");
-//		} catch (Exception e) {
-//			throw new PostNotFoundException();
-//			
-//
-//		}
-//	}
+	@Override
+	public PostDto removePost(String currentUserId, String postId, String flag) throws Throwable {
+		try {
+			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
+			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
+				lostFoundRepository.delete(post);
+				return convertPostToPostDto(post);
+			} else
+				throw new AccessException("Access denied: you'r not author!");
+		} catch (Exception e) {
+			throw new PostNotFoundException();
+		}
+	}
 
-	private PostDto convertPostToPostDto(Post post, String postId) {
+	private PostDto convertPostToPostDto(Post post) {
 		return PostDto.builder()
-				.id(postId)
+				.id(post.getId())
 				.type(post.getType())
 				.breed(post.getBreed())
 				.color(post.getColor())
@@ -120,26 +113,32 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.build();
 	}
 
-//	@Override
-//	public PostDto editPost(String currentUserId, PostEditDto postEditDto, String postId) throws Throwable {
-//		try {
-//			PostLost post = messagingRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-//			if (currentUserId.equalsIgnoreCase(post.getAuthorId())) {
-//				if (postEditDto.getText() != null) {
-//					post.setText(postEditDto.getText());
-//				}
-//				if (postEditDto.getPictures().size() != 0) {
-//					post.setPictures(postEditDto.getPictures());
-//				}
-//				post.setDateOfPublish(LocalDateTime.now());
-//				messagingRepository.save(post);
-//				return convertPostToPostDto(post);
-//			} else
-//				throw new AccessException("Access denied: you'r not author!");
-//		} catch (Exception e) {
-//			throw new DataFormatException();
-//		}
-//	}
+	@Override
+	public PostDto editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag)
+			throws Throwable {
+		try {
+			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
+			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
+				post.setBreed(postEditDto.getBreed());
+				post.setSex(postEditDto.getSex());
+				post.setColor(postEditDto.getColor());
+				post.setHeight(postEditDto.getHeight());
+				post.setDescription(postEditDto.getDescription());
+				post.setDistinctiveFeatures(createSetOfDistinctiveFeatures(postEditDto.getDistFeatures()));
+				post.setLocation(postEditDto.getLocation());
+				post.setPictures(createSetOfPictures(postEditDto.getPictureUrls()));
+				post.getAuthorData().setEmail(postEditDto.getEmail());
+				post.getAuthorData().setPhone(postEditDto.getPhone());
+				post.getAuthorData().setFb_link(postEditDto.getFb_link());
+				post.setDateOfPublish(LocalDateTime.now());
+				lostFoundRepository.save(post);
+				return convertPostToPostDto(post);
+			} else
+				throw new AccessException("Access denied: you'r not author!");
+		} catch (Exception e) {
+			throw new DataFormatException();
+		}
+	}
 //	
 //	@Override
 //	public void makePostFavorite(String currentUserId, String postId) throws Throwable {

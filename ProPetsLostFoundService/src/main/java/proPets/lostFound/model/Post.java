@@ -3,6 +3,9 @@ package proPets.lostFound.model;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
@@ -14,8 +17,13 @@ import lombok.Setter;
 @Getter
 @Setter // хотя для AuthorData он не нужен
 @Builder
-public class Post {
+@Document (collection="all_posts_lost_found")
 
+public class Post {
+	
+	@Id
+	String id;
+	String flag;
 	// String lostOrFound;
 	String type;
 	String breed;
@@ -23,7 +31,7 @@ public class Post {
 	String color;
 	String height;
 	String description;
-	String location;	
+	String location;
 	Set<String> distinctiveFeatures;
 	Set<Photo> pictures;
 	AuthorData authorData;
@@ -31,10 +39,6 @@ public class Post {
 	LocalDateTime dateOfPublish;
 
 }
-
-
-
-
 
 //	public boolean addPicture(String picture) {
 //		Photo newPhoto = new Photo(picture);

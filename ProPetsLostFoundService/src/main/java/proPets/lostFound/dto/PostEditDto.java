@@ -1,7 +1,5 @@
 package proPets.lostFound.dto;
 
-import java.util.Set;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +12,17 @@ import lombok.Setter;
 
 public class PostEditDto {
 
-	String text;
-	Set<String> pictures;
+	String breed;
+	String sex;
+	String color;
+	String height;
+	String description;
+	String distFeatures;
+	String[] pictureUrls;
+	String location;
+	
+	String phone;
+	String fb_link;
+	String email;
 
 }
