@@ -24,7 +24,6 @@ public class Post {
 	@Id
 	String id;
 	String flag;
-	// String lostOrFound;
 	String type;
 	String breed;
 	String sex;
@@ -35,7 +34,7 @@ public class Post {
 	Set<String> distinctiveFeatures;
 	Set<Photo> pictures;
 	AuthorData authorData;
-	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+	@JsonFormat(pattern = "yyyy-MM-dd")
 	LocalDateTime dateOfPublish;
 
 }

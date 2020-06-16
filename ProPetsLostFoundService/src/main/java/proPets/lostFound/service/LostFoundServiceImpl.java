@@ -3,12 +3,12 @@ package proPets.lostFound.service;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.AccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.LostFoundRepository;
@@ -39,6 +39,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 							.authorAvatar(newPostDto.getAuthorAvatar())
 							.authorName(newPostDto.getAuthorName())
 							.build();
+		Set<Photo> pictures = createSetOfPictures(newPostDto.getPictures());
+
 		Post post = Post.builder()
 				.flag(flag)
 				.type(newPostDto.getType())
@@ -48,7 +50,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.description(newPostDto.getDescription())
 				.location(newPostDto.getLocation())
 				.distinctiveFeatures(createSetOfDistinctiveFeatures(newPostDto.getDistFeatures()))
-				.pictures(createSetOfPictures(newPostDto.getPictureUrls()))
+				.pictures(pictures)
 				.authorData(authorData)
 				.dateOfPublish(LocalDateTime.now())
 				.build();
@@ -67,31 +69,30 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return distinctiveFeatures;
 	}
 	
-	private Set<Photo> createSetOfPictures(String[] picturesUrls) {
-		Set<Photo> set = new HashSet<>();
-		for (int i = 0; i < picturesUrls.length; i++) {
-			Photo newPhoto = new Photo(picturesUrls[i]);
-			if (set.size() <= 4) {
-				set.add(newPhoto);
-			} else
-				throw new MaxUploadSizeExceededException(4);
+	private Set<Photo> createSetOfPictures(String [] urls) {
+		Set<Photo> pictures = new HashSet<>();
+		for (int i = 0; i < urls.length; i++) {
+			Photo newPhoto = new Photo(urls[i]);
+			if (pictures.size() <= 4) {
+				pictures.add(newPhoto);
+			}
 		}
-		return set;
+		return pictures;
 	}
 
 	@Override
 	public PostDto removePost(String currentUserId, String postId, String flag) throws Throwable {
-		//try {
-			Post post = lostFoundRepository.findById(postId).get();
+		try {
+			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
 
-		//	if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
+			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
 				return convertPostToPostDto(post);
-		//	} else
-		//		throw new AccessException("Access denied: you'r not author!");
-		//} catch (Exception e) {
-			//throw new PostNotFoundException();
-		//}
+			} else
+				throw new AccessException("Access denied: you'r not author!");
+		} catch (Exception e) {
+			throw new PostNotFoundException();
+		}
 	}
 
 	private PostDto convertPostToPostDto(Post post) {
@@ -115,6 +116,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 			throws Throwable {
 		try {
 			Post post = lostFoundRepository.findById(postId).get();
+			Set<Photo> pictures = createSetOfPictures(postEditDto.getPictures());
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				post.setBreed(postEditDto.getBreed());
 				post.setSex(postEditDto.getSex());
@@ -123,7 +125,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.setDescription(postEditDto.getDescription());
 				post.setDistinctiveFeatures(createSetOfDistinctiveFeatures(postEditDto.getDistFeatures()));
 				post.setLocation(postEditDto.getLocation());
-				post.setPictures(createSetOfPictures(postEditDto.getPictureUrls()));
+				post.setPictures(pictures);
 				post.getAuthorData().setEmail(postEditDto.getEmail());
 				post.getAuthorData().setPhone(postEditDto.getPhone());
 				post.getAuthorData().setFb_link(postEditDto.getFb_link());
@@ -136,91 +138,16 @@ public class LostFoundServiceImpl implements LostFoundService {
 			throw new DataFormatException();
 		}
 	}
-//	
-//	@Override
-//	public void makePostFavorite(String currentUserId, String postId) throws Throwable {
-//		try {
-//			PostLost post = messagingRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-//			if (post.getUsersAddedThisPostToFavorites().contains(currentUserId)) {
-//				post.removeUserThatAddedThisPostToFav(currentUserId);
-//				messagingRepository.save(post);
-//			} else {
-//				post.addUserThatAddedThisPostToFav(currentUserId);
-//				messagingRepository.save(post);
-//			}
-//		} catch (PostNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//	}
-//	
-//	@Override
-//	public void makePostHidden(String currentUserId, String postId) throws Throwable {
-//		try {
-//			PostLost post = messagingRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-//			if (!currentUserId.equalsIgnoreCase(post.getAuthorId())) {
-//				post.addUserThatHidThisPost(currentUserId);
-//				messagingRepository.save(post);
-//			} else
-//				throw new AccessException("Access denied: you'r not author!");
-//		} catch (PostNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//	}
-//
-//	@Override
-//	public void unfollowPostsByUser(String currentUserId, String postId) throws Throwable {
-//		try {
-//			PostLost post = messagingRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-//			if (!currentUserId.equalsIgnoreCase(post.getAuthorId())) {
-//				String userIdToUnfollow = post.getAuthorId();
-//				messagingRepository.findByAuthorId(userIdToUnfollow)
-//						.filter(item -> item.addUserThatUnfollowedThisPostByAuthor(currentUserId))
-//						.forEach(i -> messagingRepository.save(i));
-//			} else
-//				throw new AccessException("Access denied: you'r not author!");
-//		} catch (PostNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//	}
-//
-//	@Override
-//	public Iterable<PostDto> getAllFavoritePostsByUser(String userId) { //проверить, есть ли такой в базе аккаунтинга, или 0 в результате хватит?
-//		Iterable<PostDto> favoritesByUser = messagingRepository.findAll()
-//				.stream()
-//				.filter(post -> post.getUsersAddedThisPostToFavorites().contains(userId))
-//				.map(post -> convertPostToPostDto(post))
-//				.collect(Collectors.toList());
-//		return favoritesByUser;
-//	}
-//
-//	@Override
-//	public void cleanPostsAndPresenceOfRemovedUser(String removedUserId) {
-//		messagingRepository.findByAuthorId(removedUserId)
-//						.forEach(i -> messagingRepository.delete(i));
-//		
-//		messagingRepository.findAll()
-//						.stream()
-//						.filter(post -> post.getUsersAddedThisPostToFavorites().contains(removedUserId))
-//						.forEach(i -> i.getUsersAddedThisPostToFavorites().remove(removedUserId));
-//		
-//		messagingRepository.findAll()
-//						.stream()
-//						.filter(post -> post.getUsersHidThisPost().contains(removedUserId))
-//						.forEach(i -> i.getUsersHidThisPost().remove(removedUserId));
-//		
-//		messagingRepository.findAll()
-//						.stream()
-//						.filter(post -> post.getUsersUnfollowedThisPostByAuthor().contains(removedUserId))
-//						.forEach(i -> i.getUsersUnfollowedThisPostByAuthor().remove(removedUserId));
-//	}
-//
-//	@Override
-//	public Iterable<PostDto> getUserPostFeed(String currentUserId) {
-//		Iterable<PostDto> list = messagingRepository.findAll()
-//								.stream()
-//								.filter(post->(!post.getUsersHidThisPost().contains(currentUserId))&&(!post.getUsersUnfollowedThisPostByAuthor().contains(currentUserId)))
-//								.map(post -> convertPostToPostDto(post))
-//								.collect(Collectors.toList());
-//		return list;
-//	}
+	
+	@Override
+	public Iterable<PostDto> getPostFeed(String currentUserId, String flag) {
+		Iterable<PostDto> list = lostFoundRepository.findAll().stream()
+				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
+				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+				.map(post -> convertPostToPostDto(post))
+				.collect(Collectors.toList());
+		return list;
+	}
+
+
 }

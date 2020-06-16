@@ -12,6 +12,8 @@ public interface LostFoundService {
 
 	PostDto editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws Throwable;
 
+	Iterable<PostDto> getPostFeed(String currentUserId, String flag);
+
 //	void makePostFavorite(String currentUserId, String postId) throws Throwable;
 //
 //	void makePostHidden(String currentUserId, String postId) throws Throwable;

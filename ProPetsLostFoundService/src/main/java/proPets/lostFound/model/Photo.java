@@ -1,29 +1,28 @@
 package proPets.lostFound.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import proPets.lostFound.configuration.LostFoundConfiguration;
 
-//@NoArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 
-public class Photo {
+public class Photo implements Serializable{
 
-	@Autowired
-	LostFoundConfiguration lostFoundConfig;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	String picture;
+	Set<String> tags;
 
-	String picturesUrl;
-	List<String> tags;
-
-	public Photo(String pictureUrl) {
-		this.picturesUrl = pictureUrl;
-		tags = new ArrayList<String>(); // заглушка: здесь должен отправляться запрос через TagService в Имаггу с помощью бина
-										// РестТемплейт
+	public Photo(String picture) {
+		this.picture = picture;
+		tags = new HashSet<String>(); // заглушка: здесь должен отправляться запрос через TagService в Имаггу с помощью бина										// РестТемплейт
 	}
 }

@@ -58,6 +58,7 @@ public class JWTValidationFilter implements Filter {
 					chain.doFilter(new WrapperRequest(request, email), response);
 					return;
 				} catch (Exception e) {
+					e.printStackTrace();
 					response.sendError(401, "Header Authorization is not valid");
 					return;
 				}
