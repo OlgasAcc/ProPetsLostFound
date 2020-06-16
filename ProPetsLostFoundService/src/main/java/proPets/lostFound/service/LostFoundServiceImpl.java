@@ -81,17 +81,17 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Override
 	public PostDto removePost(String currentUserId, String postId, String flag) throws Throwable {
-		try {
+		//try {
 			Post post = lostFoundRepository.findById(postId).get();
 
-			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
+		//	if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
 				return convertPostToPostDto(post);
-			} else
-				throw new AccessException("Access denied: you'r not author!");
-		} catch (Exception e) {
-			throw new PostNotFoundException();
-		}
+		//	} else
+		//		throw new AccessException("Access denied: you'r not author!");
+		//} catch (Exception e) {
+			//throw new PostNotFoundException();
+		//}
 	}
 
 	private PostDto convertPostToPostDto(Post post) {

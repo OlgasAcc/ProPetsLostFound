@@ -21,6 +21,7 @@ import proPets.lostFound.service.LostFoundService;
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/lost/v1")
+
 public class LostServiceController {
 	final String flag = "lost";
 
