@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
-import proPets.lostFound.dao.FoundRepository;
 import proPets.lostFound.dao.LostFoundRepository;
-import proPets.lostFound.dao.LostRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
@@ -21,8 +19,6 @@ import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Photo;
 import proPets.lostFound.model.Post;
-import proPets.lostFound.model.PostFound;
-import proPets.lostFound.model.PostLost;
 
 @Service
 public class LostFoundServiceImpl implements LostFoundService {
@@ -86,7 +82,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Override
 	public PostDto removePost(String currentUserId, String postId, String flag) throws Throwable {
 		try {
-			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
+			Post post = lostFoundRepository.findById(postId).get();
+
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
 				return convertPostToPostDto(post);
@@ -117,7 +114,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	public PostDto editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag)
 			throws Throwable {
 		try {
-			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
+			Post post = lostFoundRepository.findById(postId).get();
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				post.setBreed(postEditDto.getBreed());
 				post.setSex(postEditDto.getSex());

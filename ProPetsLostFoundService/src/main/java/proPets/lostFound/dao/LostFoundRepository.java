@@ -8,7 +8,7 @@ public interface LostFoundRepository extends MongoRepository<Post, String> {
 
 	// @Query("{categories:{$in: ?0}}")
    // Iterable<Node> findByCategories(List<String> categories);
-	
+
 
 	//List<PostLost> findAll();
 	
