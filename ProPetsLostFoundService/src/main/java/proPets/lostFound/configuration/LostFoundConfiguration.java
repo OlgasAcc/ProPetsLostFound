@@ -35,4 +35,18 @@ public class LostFoundConfiguration {
 	public String getUrl() {
 		return url;
 	}
+	
+	@Value("${geo.api.url}")
+	String geoUrl;
+	
+	public String getGeoUrl() {
+		return geoUrl;
+	}
+	
+	@Value("${geo.api.key}")
+	String geoKey;
+	
+	public String getGeoKey() {
+		return geoKey;
+	}
 }

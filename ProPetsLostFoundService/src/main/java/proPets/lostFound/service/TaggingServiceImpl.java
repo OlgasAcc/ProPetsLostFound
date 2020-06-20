@@ -1,5 +1,8 @@
 package proPets.lostFound.service;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,6 +36,16 @@ public class TaggingServiceImpl implements TaggingService {
 
 		ResponseEntity<TagResponseDto> response = restTemplate.exchange(request, TagResponseDto.class);
 		return response.getBody().getResult();
+	}
+
+	@Override
+	public Set<String> getDistinctiveFeaturesTags(String newFeatures) {
+		Set<String> distinctiveFeatures = new HashSet<>();
+		String[] features = newFeatures.split(",");
+		for (int i = 0; i < features.length; i++) {
+			distinctiveFeatures.add(features[i].trim());
+		}
+		return distinctiveFeatures;
 	}
 
 	

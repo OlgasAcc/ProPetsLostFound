@@ -30,7 +30,7 @@ public class Post {
 	String color;
 	String height;
 	String description;
-	String location;
+	GeoPoint location;
 	Set<String> distinctiveFeatures;
 	Set<Photo> pictures;
 	AuthorData authorData;

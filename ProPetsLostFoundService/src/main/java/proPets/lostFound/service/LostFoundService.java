@@ -1,5 +1,7 @@
 package proPets.lostFound.service;
 
+import java.net.URISyntaxException;
+
 import org.springframework.web.servlet.ModelAndView;
 
 import proPets.lostFound.dto.NewPostDto;
@@ -7,7 +9,7 @@ import proPets.lostFound.dto.PostEditDto;
 
 public interface LostFoundService {
 
-	ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag);
+	ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException;
 
 	ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable;
 
