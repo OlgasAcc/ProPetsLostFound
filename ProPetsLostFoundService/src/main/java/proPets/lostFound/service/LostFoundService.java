@@ -1,18 +1,21 @@
 package proPets.lostFound.service;
 
+import org.springframework.web.servlet.ModelAndView;
+
 import proPets.lostFound.dto.NewPostDto;
-import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
 
 public interface LostFoundService {
 
-	PostDto addPost(String currentUserId, NewPostDto newPostDto, String flag);
+	ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag);
 
-	PostDto removePost(String currentUserId, String postId, String flag) throws Throwable;
+	ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable;
 
-	PostDto editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws Throwable;
+	ModelAndView editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws Throwable;
 
-	Iterable<PostDto> getPostFeed(String currentUserId, String flag);
+	ModelAndView getPostFeed(int page, String flag);
+
+	ModelAndView getPostFeedByType(int page, String type, String flag);
 
 //	void makePostFavorite(String currentUserId, String postId) throws Throwable;
 //

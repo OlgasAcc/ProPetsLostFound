@@ -3,6 +3,7 @@ package proPets.lostFound.configuration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -21,4 +22,10 @@ public class LostFoundConfiguration {
 		return new RestTemplate();
 	}
 
+	@Value("${post.quantity}")
+	int quantity;
+	
+	public int getQuantity() {
+		return quantity;
+	}
 }
