@@ -8,6 +8,4 @@ import lombok.Setter;
 public class AuthResponse {
 	String email;
 	// String[] roles;
-
-
 }

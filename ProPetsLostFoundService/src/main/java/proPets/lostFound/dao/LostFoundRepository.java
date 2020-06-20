@@ -9,4 +9,6 @@ import proPets.lostFound.model.Post;
 public interface LostFoundRepository extends MongoRepository<Post, String> {
 
 	Stream<Post> findByType(String type);
+	
+	Stream<Post> findByBreed(String breed);
 }

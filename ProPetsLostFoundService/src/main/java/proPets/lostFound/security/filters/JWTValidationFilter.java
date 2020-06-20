@@ -43,7 +43,7 @@ public class JWTValidationFilter implements Filter {
 		String path = request.getServletPath();
 		String auth = request.getHeader("Authorization");
 		String method = request.getMethod();
-
+		
 		if (!checkPointCut(path, method) && checkStartPath(path)) {
 			if (auth.startsWith("Bearer")) {
 				String newToken;
@@ -95,6 +95,7 @@ public class JWTValidationFilter implements Filter {
 	private boolean checkPointCut(String path, String method) {
 		boolean check = "/lost/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method);
 		check = check || ("/found/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method));
+				//|| ("/lost/v1/post/".equalsIgnoreCase(path) && "POST".equalsIgnoreCase(method));
 		return check;
 	}
 
@@ -112,7 +113,7 @@ public class JWTValidationFilter implements Filter {
 		headers.add("Content-Type", "application/json");
 
 		String url = "https://propets-accounting-service.herokuapp.com/security/v1/verify";
-		// String url = "http://localhost:8080/security/v1/verify";
+		 //String url = "http://localhost:8080/security/v1/verify";
 		try {
 			RequestEntity<Object> request = new RequestEntity<>(headers, HttpMethod.POST, URI.create(url));
 			ResponseEntity<AuthResponse> newResponse = restTemplate.exchange(request, AuthResponse.class);

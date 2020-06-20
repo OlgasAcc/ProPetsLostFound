@@ -10,7 +10,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import proPets.lostFound.model.AuthorData;
-import proPets.lostFound.model.Photo;
 
 @AllArgsConstructor
 @Getter
@@ -28,7 +27,7 @@ public class PostDto {
 	String description;
 	String location;	
 	Set<String> distinctiveFeatures;
-	Set<Photo> pictures;
+	String[] picturesURLs;
 	AuthorData authorData;
 	@JsonFormat(pattern = "yyyy-MM-dd")
 	LocalDateTime dateOfPublish;

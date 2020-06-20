@@ -17,16 +17,6 @@ public interface LostFoundService {
 
 	ModelAndView getPostFeedByType(int page, String type, String flag);
 
-//	void makePostFavorite(String currentUserId, String postId) throws Throwable;
-//
-//	void makePostHidden(String currentUserId, String postId) throws Throwable;
-//
-//	void unfollowPostsByUser(String currentUserId, String postId) throws Throwable;
-//
-//	Iterable<PostDto> getAllFavoritePostsByUser(String userId);
-//
-//	void cleanPostsAndPresenceOfRemovedUser(String removedUserId);
-//
-//	Iterable<PostDto> getUserPostFeed(String currentUserId);
+	ModelAndView getPostFeedByBreed(int page, String breed, String flag);
 
 }

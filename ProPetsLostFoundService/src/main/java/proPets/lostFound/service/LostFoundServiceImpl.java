@@ -1,6 +1,7 @@
 package proPets.lostFound.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import proPets.lostFound.dao.LostFoundRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
+import proPets.lostFound.dto.TagDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Photo;
@@ -32,6 +34,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
+	
+	@Autowired
+	TaggingService tagService;
 
 	@Override
 	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) {
@@ -137,7 +142,22 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
-	private Set<String> createSetOfDistinctiveFeatures(String newFeaturesStr) { // gets String, splits with komas,
+	@Override
+	public ModelAndView getPostFeedByBreed(int page, String breed, String flag) {
+		List<PostDto> list = lostFoundRepository.findByBreed(breed)
+				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
+				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+				.map(p -> convertPostToPostDto(p))
+				.collect(Collectors.toList());
+		
+		int quantity = lostFoundConfiguration.getQuantity();
+		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
+		pagedListHolder.setPage(page);
+		pagedListHolder.setPageSize(quantity);
+		return createModelAndViewObject(pagedListHolder, page, quantity);
+	}
+	
+	private Set<String> createSetOfDistinctiveFeatures(String newFeaturesStr) { // gets String, splits with commas,
 		// removes beginning and ending white spaces
 		Set<String> distinctiveFeatures = new HashSet<>();
 		String[] features = newFeaturesStr.split(",");
@@ -150,7 +170,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 	private Set<Photo> createSetOfPictures(String [] urls) {
 		Set<Photo> pictures = new HashSet<>();
 		for (int i = 0; i < urls.length; i++) {
-			Photo newPhoto = new Photo(urls[i]);
+			Set<TagDto>tags=tagService.getPictureTags(urls[i]).getTags();
+			Photo newPhoto = new Photo(urls[i],tags);
 			if (pictures.size() <= 4) {
 				pictures.add(newPhoto);
 			}
@@ -159,6 +180,10 @@ public class LostFoundServiceImpl implements LostFoundService {
 	}
 	
 	private PostDto convertPostToPostDto(Post post) {
+		List<String> picturesURLs = new ArrayList<>();
+		for (Photo photo : post.getPictures()) {
+			picturesURLs.add(photo.getPicture());
+		}
 		return PostDto.builder()
 				.id(post.getId())
 				.type(post.getType())
@@ -168,7 +193,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.description(post.getDescription())
 				.location(post.getLocation())
 				.distinctiveFeatures(post.getDistinctiveFeatures())
-				.pictures(post.getPictures())
+				.picturesURLs(picturesURLs.toArray(new String[picturesURLs.size()]))
 				.authorData(post.getAuthorData())
 				.dateOfPublish(post.getDateOfPublish())
 				.build();

@@ -56,5 +56,10 @@ public class FoundServiceController {
 	public Map<String, Object> getUserPostFeedByType(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("type") String type) {
 		return lostFoundService.getPostFeedByType(page, type, flag).getModel();
 	}
+	
+	@GetMapping("/post/feed/breed")
+	public Map<String, Object> getUserPostFeedByBreed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("breed") String breed) {
+		return lostFoundService.getPostFeedByBreed(page, breed, flag).getModel();
+	}
 
 }

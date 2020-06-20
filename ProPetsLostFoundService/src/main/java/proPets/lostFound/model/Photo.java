@@ -1,28 +1,28 @@
 package proPets.lostFound.model;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Set;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import proPets.lostFound.dto.TagDto;
 
 @NoArgsConstructor
 @Getter
 @Setter
 
-public class Photo implements Serializable{
-
+public class Photo implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	String picture;
-	Set<String> tags;
 
-	public Photo(String picture) {
+	String picture;
+	Set<TagDto> tags;
+
+	public Photo(String picture, Set<TagDto> tags) {
 		this.picture = picture;
-		tags = new HashSet<String>(); // заглушка: здесь должен отправляться запрос через TagService в Имаггу с помощью бина										// РестТемплейт
+		this.tags = tags;
 	}
 }

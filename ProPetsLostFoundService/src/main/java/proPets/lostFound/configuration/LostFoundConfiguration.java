@@ -28,4 +28,11 @@ public class LostFoundConfiguration {
 	public int getQuantity() {
 		return quantity;
 	}
+	
+	@Value("${imagga.url}")
+	String url;
+	
+	public String getUrl() {
+		return url;
+	}
 }
