@@ -17,10 +17,10 @@ import lombok.Setter;
 @Getter
 @Setter // хотя для AuthorData он не нужен
 @Builder
-@Document (collection="all_posts_lost_found")
+@Document(collection = "all_posts_lost_found")
 
 public class Post {
-	
+
 	@Id
 	String id;
 	String flag;
@@ -36,17 +36,5 @@ public class Post {
 	AuthorData authorData;
 	@JsonFormat(pattern = "yyyy-MM-dd")
 	LocalDateTime dateOfPublish;
-
 }
 
-//	public boolean addPicture(String picture) {
-//		Photo newPhoto = new Photo(picture);
-//		if (pictures.size() <= 4) {
-//			return pictures.add(newPhoto);
-//		} else
-//			throw new MaxUploadSizeExceededException(4);
-//	}
-
-//	public boolean removePicture(String picture) {
-//		return pictures.remove(picture);
-//	}

@@ -12,7 +12,7 @@ public class NewPostDto {
 	String description;
 	String distFeatures;
 	String [] pictures; //pictures's urls
-	String location;
+	String address;
 
 	String authorAvatar; //должно храниться в бд, чтобы отрисовывать в ленте посты других авторов
 	String authorName;  //должно храниться в бд, чтобы отображать в ленте посты других авторов

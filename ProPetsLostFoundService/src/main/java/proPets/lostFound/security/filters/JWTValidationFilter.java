@@ -70,7 +70,6 @@ public class JWTValidationFilter implements Filter {
 		System.out.println("validation filter did not work");
 		chain.doFilter(request, response);
 	}
-	// && (path.startsWith("/lost/v1/post") || path.startsWith("/found/v1/post")
 
 	private class WrapperRequest extends HttpServletRequestWrapper {
 		String email;
@@ -95,7 +94,6 @@ public class JWTValidationFilter implements Filter {
 	private boolean checkPointCut(String path, String method) {
 		boolean check = "/lost/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method);
 		check = check || ("/found/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method));
-				//|| ("/lost/v1/post/".equalsIgnoreCase(path) && "POST".equalsIgnoreCase(method));
 		return check;
 	}
 

@@ -19,7 +19,7 @@ public class PostEditDto {
 	String description;
 	String distFeatures;
 	String[] pictures;
-	String location;
+	String address;
 	
 	String phone;
 	String fb_link;

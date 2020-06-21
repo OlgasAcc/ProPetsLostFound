@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.web.client.RestTemplate;
 
+import com.google.code.geocoder.Geocoder;
+
 import proPets.lostFound.model.Post;
 
 @Configuration

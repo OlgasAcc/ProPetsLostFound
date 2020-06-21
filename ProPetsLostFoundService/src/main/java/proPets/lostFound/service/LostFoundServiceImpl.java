@@ -1,13 +1,10 @@
 package proPets.lostFound.service;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
@@ -15,18 +12,12 @@ import java.util.zip.DataFormatException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.PagedListHolder;
 import org.springframework.expression.AccessException;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.LostFoundRepository;
-import proPets.lostFound.dto.GoogleGeoCodeResponse;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
@@ -48,6 +39,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 	@Autowired
 	TaggingService tagService;
+	
+	@Autowired
+	GeoLocationService geoLocationService;
 
 	@Override
 	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException {
@@ -60,15 +54,17 @@ public class LostFoundServiceImpl implements LostFoundService {
 							.authorName(newPostDto.getAuthorName())
 							.build();
 		Set<Photo> pictures = createSetOfPictures(newPostDto.getPictures());
+		GeoPoint geoPoint = geoLocationService.getGeoPointByAddress(newPostDto.getAddress());
 
 		Post post = Post.builder()
 				.flag(flag)
 				.type(newPostDto.getType())
 				.breed(newPostDto.getBreed())
+				.sex(newPostDto.getSex())
 				.color(newPostDto.getColor())
 				.height(newPostDto.getHeight())
 				.description(newPostDto.getDescription())
-				.location(getLocationByAddress(newPostDto.getLocation()))
+				.location(geoPoint)
 				.distinctiveFeatures(tagService.getDistinctiveFeaturesTags(newPostDto.getDistFeatures()))
 				.pictures(pictures)
 				.authorData(authorData)
@@ -104,6 +100,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 			throws Throwable {
 		try {
 			Post post = lostFoundRepository.findById(postId).get();
+			GeoPoint geoPoint = geoLocationService.getGeoPointByAddress(postEditDto.getAddress());
 			Set<Photo> pictures = createSetOfPictures(postEditDto.getPictures());
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				post.setBreed(postEditDto.getBreed());
@@ -112,7 +109,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.setHeight(postEditDto.getHeight());
 				post.setDescription(postEditDto.getDescription());
 				post.setDistinctiveFeatures(tagService.getDistinctiveFeaturesTags(postEditDto.getDistFeatures()));
-				post.setLocation(getLocationByAddress(postEditDto.getLocation()));
+				post.setLocation(geoPoint);
 				post.setPictures(pictures);
 				post.getAuthorData().setEmail(postEditDto.getEmail());
 				post.getAuthorData().setPhone(postEditDto.getPhone());
@@ -192,7 +189,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.color(post.getColor())
 				.height(post.getHeight())
 				.description(post.getDescription())
-				.location(post.getLocation().getAddress())
+				.address(post.getLocation().getAddress())
 				.distinctiveFeatures(post.getDistinctiveFeatures())
 				.picturesURLs(picturesURLs.toArray(new String[picturesURLs.size()]))
 				.authorData(post.getAuthorData())
@@ -225,45 +222,5 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return list;
 	}
 
-	private GeoPoint getLocationByAddress (String address) throws URISyntaxException {
-		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 
-		//HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization", "Basic
-		// YWNjXzc5MDBkNDQ3YmUzYTM1Njo2Y2ZkYzFmMmRkY2Y5ZTIxODY3YzFjNGY2ZmVmOGNjYg==");
-		
-		//UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(
-		//URI uri=new URI(lostFoundConfiguration.getGeoUrl() + "address="
-		//		+ address.replace(" ", "+") + "&key=" + lostFoundConfiguration.getGeoKey());
-		
-//				.queryParam("image_url",url)
-//				.queryParam("language", "en")
-//				.queryParam("limit", 10);
-		
-		 Map<String, String> vars = new HashMap<String, String>();
-
-	        vars.put("address", address);
-	        vars.put("sensor", "false");
-
-	        GeocodeResponse result = restTemplate.getForObject(
-	                "http://maps.googleapis.com/maps/api/geocode/json?address=" +address.replaceAll(" ", "+")+"&sensor=false&key="+lostFoundConfiguration.getGeoKey(),
-	                GeocodeResponse.class, vars);
-		GeoPoint geoPoint = new GeoPoint();
-		//RequestEntity<String> request = new RequestEntity<String>(headers, HttpMethod.GET, uri);
-		try {
-			//ResponseEntity<GoogleGeoCodeResponse> response = restTemplate.exchange(request,
-			//		GoogleGeoCodeResponse.class);
-			System.out.println(result.getResults());
-			geoPoint = GeoPoint.builder()
-			.address(address)
-			.latitude(2)
-			.longitude(2)
-			.build();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return geoPoint;
-		//result.getResults()[0].getGeometry().getLocation().getLat()
-		//result.getResults()[0].getGeometry().getLocation().getLng()
-	}
 }

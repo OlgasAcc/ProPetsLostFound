@@ -25,7 +25,7 @@ public class PostDto {
 	String color;
 	String height;
 	String description;
-	String location;	
+	String address;
 	Set<String> distinctiveFeatures;
 	String[] picturesURLs;
 	AuthorData authorData;

@@ -19,6 +19,7 @@ public class GeoPoint implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
 	String address;
 	double latitude;
 	double longitude;
