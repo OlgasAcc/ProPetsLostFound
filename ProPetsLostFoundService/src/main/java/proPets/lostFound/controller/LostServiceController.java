@@ -46,6 +46,11 @@ public class LostServiceController {
 	public Map<String, Object> editPost(@RequestHeader(value = "Authorization") String authorization, Principal principal, @RequestBody PostEditDto postEditDto, @PathVariable String postId, String flag) throws Throwable {
 		return lostFoundService.editPost(principal.getName(), postEditDto, postId, flag).getModel();
 	}
+	
+//	@PutMapping("/post/{postId}")
+//	public PostDto editPost(@RequestHeader(value = "Authorization") String authorization, Principal principal, @RequestBody PostEditDto postEditDto, @PathVariable String postId, String flag) throws Throwable {
+//		return lostFoundService.editPost(principal.getName(), postEditDto, postId, flag);
+//	}
 		
 	@GetMapping("/post/feed")
 	public Map<String, Object> getUserPostFeed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page) {

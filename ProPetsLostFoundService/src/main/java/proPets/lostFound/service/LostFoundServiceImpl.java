@@ -42,6 +42,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 	@Autowired
 	GeoLocationService geoLocationService;
+	
+	//private final int quantity = lostFoundConfiguration.getQuantity();
 
 	@Override
 	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException {
@@ -72,10 +74,10 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.build();
 
 			lostFoundRepository.save(post);
-						
-			int quantity = lostFoundConfiguration.getQuantity();
+			int quantity = lostFoundConfiguration.getQuantity();			
 			PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
 			return createModelAndViewObject(pagedListHolder, 0, quantity);
+			// +  need async request to Converter and ES services
 	}
 
 	@Override
@@ -100,36 +102,44 @@ public class LostFoundServiceImpl implements LostFoundService {
 			throws Throwable {
 		try {
 			Post post = lostFoundRepository.findById(postId).get();
-			GeoPoint geoPoint = geoLocationService.getGeoPointByAddress(postEditDto.getAddress());
-			Set<Photo> pictures = createSetOfPictures(postEditDto.getPictures());
+			//GeoPoint geoPoint = geoLocationService.getGeoPointByAddress(postEditDto.getAddress());
+			//Set<Photo> pictures = createSetOfPictures(postEditDto.getPictures());
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
-				post.setBreed(postEditDto.getBreed());
-				post.setSex(postEditDto.getSex());
-				post.setColor(postEditDto.getColor());
-				post.setHeight(postEditDto.getHeight());
-				post.setDescription(postEditDto.getDescription());
-				post.setDistinctiveFeatures(tagService.getDistinctiveFeaturesTags(postEditDto.getDistFeatures()));
-				post.setLocation(geoPoint);
-				post.setPictures(pictures);
-				post.getAuthorData().setEmail(postEditDto.getEmail());
-				post.getAuthorData().setPhone(postEditDto.getPhone());
-				post.getAuthorData().setFb_link(postEditDto.getFb_link());
+				post.setBreed(postEditDto.getBreed() != null ? postEditDto.getBreed() : post.getBreed());
+				post.setSex(postEditDto.getSex() != null ? postEditDto.getSex() : post.getSex());
+				post.setColor(postEditDto.getColor() != null ? postEditDto.getColor() : post.getColor());
+				post.setHeight(postEditDto.getHeight() != null ? postEditDto.getHeight() : post.getHeight());
+				post.setDescription(
+						postEditDto.getDescription() != null ? postEditDto.getDescription() : post.getDescription());
+				post.setDistinctiveFeatures(postEditDto.getDistFeatures() != null
+						? tagService.getDistinctiveFeaturesTags(postEditDto.getDistFeatures())
+						: post.getDistinctiveFeatures());
+				post.setLocation(postEditDto.getAddress() != null
+						? geoLocationService.getGeoPointByAddress(postEditDto.getAddress())
+						: post.getLocation());
+				post.setPictures(postEditDto.getPictures() != null ? createSetOfPictures(postEditDto.getPictures())
+						: post.getPictures());
+				post.getAuthorData().setEmail(
+						postEditDto.getEmail() != null ? postEditDto.getEmail() : post.getAuthorData().getEmail());
+				post.getAuthorData().setPhone(
+						postEditDto.getPhone() != null ? postEditDto.getPhone() : post.getAuthorData().getPhone());
+				post.getAuthorData().setFb_link(postEditDto.getFb_link() != null ? postEditDto.getFb_link()
+						: post.getAuthorData().getFb_link());
 				post.setDateOfPublish(LocalDateTime.now());
-				lostFoundRepository.save(post);
 				
-				int quantity = lostFoundConfiguration.getQuantity();
-				PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
-				return createModelAndViewObject(pagedListHolder, 0, quantity);
+				lostFoundRepository.save(post);
+				//return convertPostToPostDto(post);
+				return getPostFeed(0, flag);
 			} else
 				throw new AccessException("Access denied: you'r not author!");
 		} catch (Exception e) {
 			throw new DataFormatException();
-		}
+		} 
 	}
 	
 	//need to save current page number in Store (front) for updating page or repeat the last request
 	@Override
-	public ModelAndView getPostFeed(int page, String flag) {		
+	public ModelAndView getPostFeed(int page, String flag) {	
 		int quantity = lostFoundConfiguration.getQuantity();
 		PagedListHolder<PostDto> pagedListHolder = createPageListHolder(page, quantity, flag);
 		return createModelAndViewObject(pagedListHolder, page, quantity);

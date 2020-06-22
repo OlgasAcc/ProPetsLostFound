@@ -13,6 +13,7 @@ public interface LostFoundService {
 
 	ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable;
 
+	//PostDto editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws Throwable;
 	ModelAndView editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws Throwable;
 
 	ModelAndView getPostFeed(int page, String flag);
