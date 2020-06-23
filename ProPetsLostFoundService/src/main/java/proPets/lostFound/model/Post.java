@@ -1,7 +1,6 @@
 package proPets.lostFound.model;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -30,9 +29,9 @@ public class Post {
 	String color;
 	String height;
 	String description;
-	GeoPoint location;
-	Set<String> distinctiveFeatures;
-	Set<Photo> pictures;
+	String address;
+	String distinctiveFeatures;
+	String [] picturesURLs;
 	AuthorData authorData;
 	@JsonFormat(pattern = "yyyy-MM-dd")
 	LocalDateTime dateOfPublish;

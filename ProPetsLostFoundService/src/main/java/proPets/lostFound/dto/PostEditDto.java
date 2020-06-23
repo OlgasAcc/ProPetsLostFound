@@ -16,7 +16,7 @@ public class PostEditDto {
 	String height;
 	String description;
 	String distFeatures;
-	String[] pictures;
+	String[] picturesURLs;
 	String address;
 	
 	String phone;

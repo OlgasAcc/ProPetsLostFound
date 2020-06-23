@@ -2,10 +2,7 @@ package proPets.lostFound.service;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -21,11 +18,8 @@ import proPets.lostFound.dao.LostFoundRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
-import proPets.lostFound.dto.TagDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
-import proPets.lostFound.model.GeoPoint;
-import proPets.lostFound.model.Photo;
 import proPets.lostFound.model.Post;
 
 @Service
@@ -36,14 +30,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
-	
-	@Autowired
-	TaggingService tagService;
-	
-	@Autowired
-	GeoLocationService geoLocationService;
-	
-	//private final int quantity = lostFoundConfiguration.getQuantity();
 
 	@Override
 	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException {
@@ -55,8 +41,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 							.authorAvatar(newPostDto.getAuthorAvatar())
 							.authorName(newPostDto.getAuthorName())
 							.build();
-		Set<Photo> pictures = createSetOfPictures(newPostDto.getPictures());
-		GeoPoint geoPoint = geoLocationService.getGeoPointByAddress(newPostDto.getAddress());
 
 		Post post = Post.builder()
 				.flag(flag)
@@ -66,18 +50,24 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.color(newPostDto.getColor())
 				.height(newPostDto.getHeight())
 				.description(newPostDto.getDescription())
-				.location(geoPoint)
-				.distinctiveFeatures(tagService.getDistinctiveFeaturesTags(newPostDto.getDistFeatures()))
-				.pictures(pictures)
+				.address(newPostDto.getAddress())
+				.distinctiveFeatures(newPostDto.getDistFeatures())
+				.picturesURLs(newPostDto.getPicturesURLs())
 				.authorData(authorData)
 				.dateOfPublish(LocalDateTime.now())
 				.build();
 
 			lostFoundRepository.save(post);
-			int quantity = lostFoundConfiguration.getQuantity();			
+			int quantity = lostFoundConfiguration.getQuantity();	
+			
+			// тут конвертировать в ПостТуКонверт
+			// тут отправить запрос в Конвертер вместе с постом из Монго (в ПостТуКонверт), дождаться ответа, что пост сохранен в Эластик
+			
+			// в конце - отправить асинхронный метод на поиск в противоположной базе и мэйл-уведомления в Кафку
+			
 			PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
 			return createModelAndViewObject(pagedListHolder, 0, quantity);
-			// +  need async request to Converter and ES services
+
 	}
 
 	@Override
@@ -87,6 +77,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
+				
+				// тут отправить в сервис Сёрчинг запрос с айди поста на удаление поста, дождаться ответа
+				
 				int quantity = lostFoundConfiguration.getQuantity();
 				PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
 				return createModelAndViewObject(pagedListHolder, 0, quantity);
@@ -102,33 +95,25 @@ public class LostFoundServiceImpl implements LostFoundService {
 			throws Throwable {
 		try {
 			Post post = lostFoundRepository.findById(postId).get();
-			//GeoPoint geoPoint = geoLocationService.getGeoPointByAddress(postEditDto.getAddress());
-			//Set<Photo> pictures = createSetOfPictures(postEditDto.getPictures());
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				post.setBreed(postEditDto.getBreed() != null ? postEditDto.getBreed() : post.getBreed());
 				post.setSex(postEditDto.getSex() != null ? postEditDto.getSex() : post.getSex());
 				post.setColor(postEditDto.getColor() != null ? postEditDto.getColor() : post.getColor());
 				post.setHeight(postEditDto.getHeight() != null ? postEditDto.getHeight() : post.getHeight());
-				post.setDescription(
-						postEditDto.getDescription() != null ? postEditDto.getDescription() : post.getDescription());
-				post.setDistinctiveFeatures(postEditDto.getDistFeatures() != null
-						? tagService.getDistinctiveFeaturesTags(postEditDto.getDistFeatures())
-						: post.getDistinctiveFeatures());
-				post.setLocation(postEditDto.getAddress() != null
-						? geoLocationService.getGeoPointByAddress(postEditDto.getAddress())
-						: post.getLocation());
-				post.setPictures(postEditDto.getPictures() != null ? createSetOfPictures(postEditDto.getPictures())
-						: post.getPictures());
-				post.getAuthorData().setEmail(
-						postEditDto.getEmail() != null ? postEditDto.getEmail() : post.getAuthorData().getEmail());
-				post.getAuthorData().setPhone(
-						postEditDto.getPhone() != null ? postEditDto.getPhone() : post.getAuthorData().getPhone());
-				post.getAuthorData().setFb_link(postEditDto.getFb_link() != null ? postEditDto.getFb_link()
-						: post.getAuthorData().getFb_link());
+				post.setDescription(postEditDto.getDescription() != null ? postEditDto.getDescription() : post.getDescription());
+				post.setDistinctiveFeatures(postEditDto.getDistFeatures() != null ? postEditDto.getDistFeatures(): post.getDistinctiveFeatures());
+				post.setAddress(postEditDto.getAddress() != null ? postEditDto.getAddress() : post.getAddress());
+				post.setPicturesURLs(postEditDto.getPicturesURLs() != null ? postEditDto.getPicturesURLs() : post.getPicturesURLs());
+				post.getAuthorData().setEmail(postEditDto.getEmail() != null ? postEditDto.getEmail() : post.getAuthorData().getEmail());
+				post.getAuthorData().setPhone(postEditDto.getPhone() != null ? postEditDto.getPhone() : post.getAuthorData().getPhone());
+				post.getAuthorData().setFb_link(postEditDto.getFb_link() != null ? postEditDto.getFb_link(): post.getAuthorData().getFb_link());
 				post.setDateOfPublish(LocalDateTime.now());
 				
 				lostFoundRepository.save(post);
-				//return convertPostToPostDto(post);
+				
+				// тут конвертировать в ПостТуКонверт
+				// отправить на сервер Конвертер, тот перезапишет в Эластик (Сёрчинг), вернет ОК
+				
 				return getPostFeed(0, flag);
 			} else
 				throw new AccessException("Access denied: you'r not author!");
@@ -175,23 +160,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
-	private Set<Photo> createSetOfPictures(String [] urls) {
-		Set<Photo> pictures = new HashSet<>();
-		for (int i = 0; i < urls.length; i++) {
-			Set<TagDto>tags=tagService.getPictureTags(urls[i]).getTags();
-			Photo newPhoto = new Photo(urls[i],tags);
-			if (pictures.size() <= 4) {
-				pictures.add(newPhoto);
-			}
-		}
-		return pictures;
-	}
-	
 	private PostDto convertPostToPostDto(Post post) {
-		List<String> picturesURLs = new ArrayList<>();
-		for (Photo photo : post.getPictures()) {
-			picturesURLs.add(photo.getPicture());
-		}
 		return PostDto.builder()
 				.id(post.getId())
 				.type(post.getType())
@@ -199,9 +168,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.color(post.getColor())
 				.height(post.getHeight())
 				.description(post.getDescription())
-				.address(post.getLocation().getAddress())
+				.address(post.getAddress())
 				.distinctiveFeatures(post.getDistinctiveFeatures())
-				.picturesURLs(picturesURLs.toArray(new String[picturesURLs.size()]))
+				.picturesURLs(post.getPicturesURLs())
 				.authorData(post.getAuthorData())
 				.dateOfPublish(post.getDateOfPublish())
 				.build();
