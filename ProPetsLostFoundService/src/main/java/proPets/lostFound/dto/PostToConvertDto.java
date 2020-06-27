@@ -1,5 +1,7 @@
 package proPets.lostFound.dto;
 
+import java.io.Serializable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,8 +12,12 @@ import lombok.Setter;
 @Setter
 @Builder
 
-public class PostToConvertDto { 
+public class PostToConvertDto implements Serializable{ 
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	String id; //post id
 	String email; //authorId
 	String flag;

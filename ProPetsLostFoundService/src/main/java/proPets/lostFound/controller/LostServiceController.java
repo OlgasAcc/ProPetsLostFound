@@ -46,11 +46,6 @@ public class LostServiceController {
 	public Map<String, Object> editPost(@RequestHeader(value = "Authorization") String authorization, Principal principal, @RequestBody PostEditDto postEditDto, @PathVariable String postId, String flag) throws Throwable {
 		return lostFoundService.editPost(principal.getName(), postEditDto, postId, flag).getModel();
 	}
-	
-//	@PutMapping("/post/{postId}")
-//	public PostDto editPost(@RequestHeader(value = "Authorization") String authorization, Principal principal, @RequestBody PostEditDto postEditDto, @PathVariable String postId, String flag) throws Throwable {
-//		return lostFoundService.editPost(principal.getName(), postEditDto, postId, flag);
-//	}
 		
 	@GetMapping("/post/feed")
 	public Map<String, Object> getUserPostFeed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page) {
@@ -65,6 +60,11 @@ public class LostServiceController {
 	@GetMapping("/post/feed/breed")
 	public Map<String, Object> getUserPostFeedByBreed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("breed") String breed) {
 		return lostFoundService.getPostFeedByBreed(page, breed, flag).getModel();
+	}
+	
+	@GetMapping("/post/feed/location")
+	public Map<String, Object> getUserPostFeedByLocation(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("address") String address) {
+		return lostFoundService.getPostFeedByLocation(page, address, flag).getModel();
 	}
 	
 //	// for front: this request is working with "remove user" in Accounting service: it is cleaning the "tail of removed user" AFTER removing the user from account db

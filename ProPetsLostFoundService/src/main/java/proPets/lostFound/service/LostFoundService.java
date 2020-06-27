@@ -22,4 +22,7 @@ public interface LostFoundService {
 
 	ModelAndView getPostFeedByBreed(int page, String breed, String flag);
 
+	ModelAndView getPostFeedByLocation(int page, String address, String flag);
+
+
 }

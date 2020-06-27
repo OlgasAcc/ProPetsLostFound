@@ -1,26 +1,40 @@
 package proPets.lostFound.service;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.PagedListHolder;
 import org.springframework.expression.AccessException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.RequestEntity.BodyBuilder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.LostFoundRepository;
+import proPets.lostFound.dto.LocationSearchResponseDto;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
+import proPets.lostFound.dto.PostToConvertDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Post;
+
 
 @Service
 public class LostFoundServiceImpl implements LostFoundService {
@@ -57,18 +71,50 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.dateOfPublish(LocalDateTime.now())
 				.build();
 
-			lostFoundRepository.save(post);
-			int quantity = lostFoundConfiguration.getQuantity();	
-			
-			// тут конвертировать в ПостТуКонверт
-			// тут отправить запрос в Конвертер вместе с постом из Монго (в ПостТуКонверт), дождаться ответа, что пост сохранен в Эластик
-			
-			// в конце - отправить асинхронный метод на поиск в противоположной базе и мэйл-уведомления в Кафку
-			
-			PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
-			return createModelAndViewObject(pagedListHolder, 0, quantity);
+		post = lostFoundRepository.save(post);
+		int quantity = lostFoundConfiguration.getQuantity();
 
+		savePostInSearchingServiceDB(post);
+		// дожидается ответа: пост сохранее в Эластиксёрч
+
+		// в конце - отправить асинхронный метод на поиск в противоположной базе и
+		// мэйл-уведомления в Кафку
+
+		PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
+		return createModelAndViewObject(pagedListHolder, 0, quantity);
 	}
+	
+	private PostToConvertDto convertPostToPostToConvertDto (Post post) {
+		return PostToConvertDto.builder()
+				.id(post.getId())
+				.flag(post.getFlag())
+				.email(post.getAuthorData().getAuthorId())
+				.type(post.getType())
+				.address(post.getAddress())
+				.distinctiveFeatures(post.getDistinctiveFeatures())
+				.picturesURLs(post.getPicturesURLs())
+				.build();
+	}
+	
+	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
+		PostToConvertDto body = convertPostToPostToConvertDto (post);
+
+		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+
+		//String url = "https://propets-.../security/v1/verify";
+		String url = "http://localhost:8085/search/v1/post"; //to Searching service
+		try {
+			HttpHeaders newHeaders = new HttpHeaders();
+			newHeaders.add("Content-Type", "application/json");
+			BodyBuilder requestBodyBuilder = RequestEntity.method(HttpMethod.PUT, URI.create(url)).headers(newHeaders);
+			RequestEntity<PostToConvertDto> request = requestBodyBuilder.body(body);
+			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
+			return newResponse;
+		} catch (HttpClientErrorException e) {
+			throw new RuntimeException("Saving post is failed");
+		}
+	}
+	
 
 	@Override
 	public ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable {
@@ -110,9 +156,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.setDateOfPublish(LocalDateTime.now());
 				
 				lostFoundRepository.save(post);
-				
-				// тут конвертировать в ПостТуКонверт
-				// отправить на сервер Конвертер, тот перезапишет в Эластик (Сёрчинг), вернет ОК
+				savePostInSearchingServiceDB (post);
 				
 				return getPostFeed(0, flag);
 			} else
@@ -199,7 +243,50 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.map(p -> convertPostToPostDto(p))
 				.collect(Collectors.toList());
 		return list;
+	}	
+
+	@Override
+	public ModelAndView getPostFeedByLocation(int page, String address, String flag) {
+
+		List<String> postIds = convertArrayToList(getListOfPostIdByAddress(address, flag));
+		
+		List<PostDto> list = lostFoundRepository.findAll()
+				.stream()
+				.filter(p->postIds.contains(p.getId()))
+				.map(p -> convertPostToPostDto(p))
+				.collect(Collectors.toList());
+		
+		int quantity = lostFoundConfiguration.getQuantity();
+		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
+		pagedListHolder.setPage(page);
+		pagedListHolder.setPageSize(quantity);
+		return createModelAndViewObject(pagedListHolder, page, quantity);
+	}
+	
+	private List<String> convertArrayToList(String[] array){
+		 List<String> collection = new ArrayList<>();
+		for (int i = 0; i < array.length; i++) {
+			collection.add(array[i]);
+		}
+		 return collection;
 	}
 
+	private String[] getListOfPostIdByAddress(String address, String flag) {
+		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
 
+		try {
+			HttpHeaders newHeaders = new HttpHeaders();
+			newHeaders.add("Content-Type", "application/json");
+			//String url = "https://propets-.../search/v1/location";
+			String url = "http://localhost:8085/search/v1/location"; //to Searching service
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+					.queryParam("address",address)
+					.queryParam("flag", flag);
+			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
+			ResponseEntity<LocationSearchResponseDto> newResponse = restTemplate.exchange(request, LocationSearchResponseDto.class);
+			return newResponse.getBody().getPostIds();
+		} catch (HttpClientErrorException e) {
+			throw new RuntimeException("Saving post is failed");
+		}
+	}
 }

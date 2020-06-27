@@ -9,14 +9,20 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter // хотя для AuthorData он не нужен
-@Builder
+@EqualsAndHashCode(of = { "id" })
+@ToString
 @Document(collection = "all_posts_lost_found")
+@Builder
 
 public class Post {
 
