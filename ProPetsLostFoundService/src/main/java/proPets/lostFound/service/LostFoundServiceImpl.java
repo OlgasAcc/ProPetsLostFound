@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -84,37 +83,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return createModelAndViewObject(pagedListHolder, 0, quantity);
 	}
 	
-	private PostToConvertDto convertPostToPostToConvertDto (Post post) {
-		return PostToConvertDto.builder()
-				.id(post.getId())
-				.flag(post.getFlag())
-				.email(post.getAuthorData().getAuthorId())
-				.type(post.getType())
-				.address(post.getAddress())
-				.distinctiveFeatures(post.getDistinctiveFeatures())
-				.picturesURLs(post.getPicturesURLs())
-				.build();
-	}
-	
-	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
-		PostToConvertDto body = convertPostToPostToConvertDto (post);
-
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
-
-		//String url = "https://propets-.../security/v1/verify";
-		String url = "http://localhost:8085/search/v1/post"; //to Searching service
-		try {
-			HttpHeaders newHeaders = new HttpHeaders();
-			newHeaders.add("Content-Type", "application/json");
-			BodyBuilder requestBodyBuilder = RequestEntity.method(HttpMethod.PUT, URI.create(url)).headers(newHeaders);
-			RequestEntity<PostToConvertDto> request = requestBodyBuilder.body(body);
-			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
-			return newResponse;
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Saving post is failed");
-		}
-	}
-	
 
 	@Override
 	public ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable {
@@ -157,6 +125,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 				
 				lostFoundRepository.save(post);
 				savePostInSearchingServiceDB (post);
+				
+				// отправить в Серчинг запрос на редактирование, дождаться ответа
 				
 				return getPostFeed(0, flag);
 			} else
@@ -204,6 +174,72 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
+	@Override
+	public ModelAndView getPostFeedByLocation(int page, String address, String flag) {
+
+		List<String> postIds = convertArrayToList(getListOfPostIdByAddress(address, flag));
+		
+		List<PostDto> list = lostFoundRepository.findAll()
+				.stream()
+				.filter(p->postIds.contains(p.getId()))
+				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+				.map(p -> convertPostToPostDto(p))
+				.collect(Collectors.toList());
+		
+		int quantity = lostFoundConfiguration.getQuantity();
+		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
+		pagedListHolder.setPage(page);
+		pagedListHolder.setPageSize(quantity);
+		return createModelAndViewObject(pagedListHolder, page, quantity);
+	}
+	
+	
+	
+	
+// UTILS!
+//___________________________________________________________
+	
+	
+	private PostToConvertDto convertPostToPostToConvertDto (Post post) {
+		return PostToConvertDto.builder()
+				.id(post.getId())
+				.flag(post.getFlag())
+				.email(post.getAuthorData().getAuthorId())
+				.type(post.getType())
+				.address(post.getAddress())
+				.distinctiveFeatures(post.getDistinctiveFeatures())
+				.picturesURLs(post.getPicturesURLs())
+				.build();
+	}
+	
+	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
+		PostToConvertDto body = convertPostToPostToConvertDto (post);
+
+		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+
+		//String url = "https://propets-.../security/v1/verify";
+		String url = "http://localhost:8085/search/v1/post"; //to Searching service
+		try {
+			HttpHeaders newHeaders = new HttpHeaders();
+			newHeaders.add("Content-Type", "application/json");
+			BodyBuilder requestBodyBuilder = RequestEntity.method(HttpMethod.POST, URI.create(url)).headers(newHeaders);
+			RequestEntity<PostToConvertDto> request = requestBodyBuilder.body(body);
+			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
+			return newResponse;
+		} catch (HttpClientErrorException e) {
+			throw new RuntimeException("Saving post is failed");
+		}
+	}
+	
+	
+	private List<String> convertArrayToList(String[] array){
+		 List<String> collection = new ArrayList<>();
+		for (int i = 0; i < array.length; i++) {
+			collection.add(array[i]);
+		}
+		 return collection;
+	}
+	
 	private PostDto convertPostToPostDto(Post post) {
 		return PostDto.builder()
 				.id(post.getId())
@@ -211,6 +247,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.breed(post.getBreed())
 				.color(post.getColor())
 				.height(post.getHeight())
+				.sex(post.getSex())
 				.description(post.getDescription())
 				.address(post.getAddress())
 				.distinctiveFeatures(post.getDistinctiveFeatures())
@@ -245,32 +282,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return list;
 	}	
 
-	@Override
-	public ModelAndView getPostFeedByLocation(int page, String address, String flag) {
-
-		List<String> postIds = convertArrayToList(getListOfPostIdByAddress(address, flag));
-		
-		List<PostDto> list = lostFoundRepository.findAll()
-				.stream()
-				.filter(p->postIds.contains(p.getId()))
-				.map(p -> convertPostToPostDto(p))
-				.collect(Collectors.toList());
-		
-		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
-	}
 	
-	private List<String> convertArrayToList(String[] array){
-		 List<String> collection = new ArrayList<>();
-		for (int i = 0; i < array.length; i++) {
-			collection.add(array[i]);
-		}
-		 return collection;
-	}
-
 	private String[] getListOfPostIdByAddress(String address, String flag) {
 		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
 
