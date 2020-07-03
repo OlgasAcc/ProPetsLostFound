@@ -48,24 +48,31 @@ public class LostServiceController {
 	}
 		
 	@GetMapping("/post/feed")
-	public Map<String, Object> getUserPostFeed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page) {
-		return lostFoundService.getPostFeed(page, flag).getModel();
+	public Map<String, Object> getUserPostsFeed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page) {
+		return lostFoundService.getPostsFeed(page, flag).getModel();
 	}
 	
 	@GetMapping("/post/feed/type")
-	public Map<String, Object> getUserPostFeedByType(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("type") String type) {
-		return lostFoundService.getPostFeedByType(page, type, flag).getModel();
+	public Map<String, Object> getUserPostsFeedMatchingByType(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("type") String type) {
+		return lostFoundService.getPostsFeedMatchingByType(page, type, flag).getModel();
 	}
 	
 	@GetMapping("/post/feed/breed")
-	public Map<String, Object> getUserPostFeedByBreed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("breed") String breed) {
-		return lostFoundService.getPostFeedByBreed(page, breed, flag).getModel();
+	public Map<String, Object> getUserPostsFeedMatchingByBreed(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("breed") String breed) {
+		return lostFoundService.getPostsFeedMatchingByBreed(page, breed, flag).getModel();
 	}
 	
 	@GetMapping("/post/feed/location")
-	public Map<String, Object> getUserPostFeedByLocation(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("address") String address) {
-		return lostFoundService.getPostFeedByLocation(page, address, flag).getModel();
+	public Map<String, Object> getUserPostsFeedMatchingByLocation(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("address") String address) {
+		return lostFoundService.getPostsFeedMatchingByLocation(page, address, flag).getModel();
 	}
+	
+	@GetMapping("/post/feed/features")
+	public Map<String, Object> getUserPostFeedMatchingByFeatures(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("address") String address) {
+		return lostFoundService.getPostsFeedMatchingByFeatures(page, address, flag).getModel();
+	}
+	
+	
 	
 //	// for front: this request is working with "remove user" in Accounting service: it is cleaning the "tail of removed user" AFTER removing the user from account db
 //	@DeleteMapping("/post/cleaner")

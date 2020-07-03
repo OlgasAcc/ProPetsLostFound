@@ -9,6 +9,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class LocationSearchResponseDto {
+public class SearchResponseDto {
 	String[] postIds;
 }
