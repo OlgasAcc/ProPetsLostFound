@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Getter
+
 public class NewPostDto {
+	
 	String type;
 	String breed;
 	String sex;
@@ -15,7 +17,7 @@ public class NewPostDto {
 	String height;
 	String description;
 	String distFeatures;
-	String [] picturesURLs; //pictures's urls
+	String [] picturesURLs; 
 	String address;
 
 	String authorAvatar; //должно храниться в бд, чтобы отрисовывать в ленте посты других авторов

@@ -11,9 +11,6 @@ import lombok.Setter;
 public class PostEditDto {
 
 	String breed;
-	String sex;
-	String color;
-	String height;
 	String description;
 	String distFeatures;
 	String[] picturesURLs;

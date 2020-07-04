@@ -19,17 +19,18 @@ import org.springframework.http.RequestEntity.BodyBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.LostFoundRepository;
-import proPets.lostFound.dto.SearchResponseDto;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
 import proPets.lostFound.dto.PostToConvertDto;
+import proPets.lostFound.dto.SearchResponseDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Post;
@@ -74,10 +75,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 		int quantity = lostFoundConfiguration.getQuantity();
 
 		savePostInSearchingServiceDB(post);
-		// дожидается ответа: пост сохранее в Эластиксёрч
+		// дожидается ответа: пост сохранен в Эластиксёрч
 
-		// в конце - отправить асинхронный метод на поиск в противоположной базе и
-		// мэйл-уведомления в Кафку
+		// отправить в Кафку асинхр запрос на поиск совпадений и рассылку
 
 		PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
 		return createModelAndViewObject(pagedListHolder, 0, quantity);
@@ -91,7 +91,10 @@ public class LostFoundServiceImpl implements LostFoundService {
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
 				
-				// тут отправить в сервис Сёрчинг запрос с айди поста на удаление поста, дождаться ответа
+				ResponseEntity<String> response=removePostInSearchingServiceDB(postId);
+				if(response.getStatusCodeValue()!=200) {
+					throw new HttpServerErrorException(HttpStatus.REQUEST_TIMEOUT, "Removing was failed in Searching service database");
+				}
 				
 				int quantity = lostFoundConfiguration.getQuantity();
 				PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
@@ -110,9 +113,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 			Post post = lostFoundRepository.findById(postId).get();
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				post.setBreed(postEditDto.getBreed() != null ? postEditDto.getBreed() : post.getBreed());
-				post.setSex(postEditDto.getSex() != null ? postEditDto.getSex() : post.getSex());
-				post.setColor(postEditDto.getColor() != null ? postEditDto.getColor() : post.getColor());
-				post.setHeight(postEditDto.getHeight() != null ? postEditDto.getHeight() : post.getHeight());
 				post.setDescription(postEditDto.getDescription() != null ? postEditDto.getDescription() : post.getDescription());
 				post.setDistinctiveFeatures(postEditDto.getDistFeatures() != null ? postEditDto.getDistFeatures(): post.getDistinctiveFeatures());
 				post.setAddress(postEditDto.getAddress() != null ? postEditDto.getAddress() : post.getAddress());
@@ -123,9 +123,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.setDateOfPublish(LocalDateTime.now());
 				
 				lostFoundRepository.save(post);
-				savePostInSearchingServiceDB (post);
+				savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа
 				
-				// отправить в Серчинг запрос на редактирование, дождаться ответа
+				// отправить в Кафку асинхр запрос на поиск совпадений и рассылку
 				
 				return getPostsFeed(0, flag);
 			} else
@@ -232,12 +232,27 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.build();
 	}
 	
+
+	private ResponseEntity<String> removePostInSearchingServiceDB(String postId) {
+		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
+		// String url = "https://propets-.../security/v1/post";
+		String url = "http://localhost:8085/search/v1/post"; // to Searching service
+		try {
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("postId", postId);
+			RequestEntity<PostToConvertDto> request = new RequestEntity<>(HttpMethod.DELETE, builder.build().toUri());
+			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
+			return newResponse;
+		} catch (HttpClientErrorException e) {
+			throw new RuntimeException("Removing post is failed");
+		}
+	}
+	
 	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
 		PostToConvertDto body = convertPostToPostToConvertDto (post);
 
 		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
 
-		//String url = "https://propets-.../security/v1/verify";
+		//String url = "https://propets-.../security/v1/post";
 		String url = "http://localhost:8085/search/v1/post"; //to Searching service
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
