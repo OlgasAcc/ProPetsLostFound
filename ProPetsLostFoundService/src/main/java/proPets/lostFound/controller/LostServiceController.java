@@ -72,12 +72,24 @@ public class LostServiceController {
 		return lostFoundService.getPostsFeedMatchingByFeatures(page, address, flag).getModel();
 	}
 	
+	// для отрисовки совпавших постов для автора нового поста (переход по ссылке из письма на фронт, оттуда - запрос сюда)
+	@GetMapping("/all_matched")
+	public Map<String, Object> getUserPostFeedMatching(@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page, @RequestParam("address") String address) {
+		return lostFoundService.getPostsFeedMatchingByFeatures(page, address, flag).getModel();
+	}
 	
 	
-//	// for front: this request is working with "remove user" in Accounting service: it is cleaning the "tail of removed user" AFTER removing the user from account db
-//	@DeleteMapping("/post/cleaner")
-//	public void cleanPostsAndPresenceOfRemovedUser(@RequestBody String removedUserId) {
-//		lostFoundService.cleanPostsAndPresenceOfRemovedUser(removedUserId);
-//	}
+	
+	
+	// для отрисовки 1 нового поста для всех авторов, с постом которых он совпал (переход по ссылке на фронт - оттуда - запрос сюда)
+	
+	
+	
+	//for front: this request is working with "remove user" in Accounting service: it is cleaning the "tail of removed user" AFTER removing the user from account db
+	//in searching service db too
+	@DeleteMapping("/post/cleaner")
+	public void cleanPostsAndPresenceOfRemovedUser(@RequestParam ("authorId") String authorId) {
+		lostFoundService.cleanPostsOfRemovedUser(authorId);
+	}
 
 }

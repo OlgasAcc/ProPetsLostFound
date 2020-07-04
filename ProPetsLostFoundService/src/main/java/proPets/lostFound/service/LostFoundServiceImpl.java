@@ -212,10 +212,23 @@ public class LostFoundServiceImpl implements LostFoundService {
 	}
 	
 	
+	@Override
+	public void cleanPostsOfRemovedUser(String authorId) {
+		lostFoundRepository.findAll().stream()
+					.filter(p->p.getAuthorData().getAuthorId().equalsIgnoreCase(authorId))
+					.forEach(post->lostFoundRepository.delete(post));	
+		ResponseEntity<String> response=removePostsOfAuthorInSearchingService (authorId);
+		if(response.getStatusCodeValue()!=200) {
+			throw new HttpServerErrorException(HttpStatus.REQUEST_TIMEOUT, "Removing was failed in Searching service database");
+		}
+	}
 	
 	
 	
 	
+	
+	
+
 // UTILS!
 //___________________________________________________________
 	
@@ -245,6 +258,21 @@ public class LostFoundServiceImpl implements LostFoundService {
 		} catch (HttpClientErrorException e) {
 			throw new RuntimeException("Removing post is failed");
 		}
+	}
+	
+	private ResponseEntity<String> removePostsOfAuthorInSearchingService(String authorId) {
+		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
+		// String url = "https://propets-.../security/v1/post";
+		String url = "http://localhost:8085/search/v1/cleaner"; // to Searching service
+		try {
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("authorId", authorId);
+			RequestEntity<PostToConvertDto> request = new RequestEntity<>(HttpMethod.DELETE, builder.build().toUri());
+			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
+			return newResponse;
+		} catch (HttpClientErrorException e) {
+			throw new RuntimeException("Removing post is failed");
+		}
+		
 	}
 	
 	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
@@ -353,4 +381,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 			throw new RuntimeException("Saving post is failed");
 		}
 	}
+	
+
 }

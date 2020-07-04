@@ -11,4 +11,6 @@ public interface LostFoundRepository extends MongoRepository<Post, String> {
 	Stream<Post> findByType(String type);
 	
 	Stream<Post> findByBreed(String breed);
+	
+	Stream<Post> findByAuthorDataAuthorId(String authorId);
 }

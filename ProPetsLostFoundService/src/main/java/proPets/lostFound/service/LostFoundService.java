@@ -25,4 +25,6 @@ public interface LostFoundService {
 
 	ModelAndView getPostsFeedMatchingByFeatures(int page, String postId, String flag);
 
+	void cleanPostsOfRemovedUser(String authorId);
+
 }
