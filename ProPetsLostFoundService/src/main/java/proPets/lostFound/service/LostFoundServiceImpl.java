@@ -223,6 +223,31 @@ public class LostFoundServiceImpl implements LostFoundService {
 		}
 	}
 	
+	@Override
+	public PostDto getNewMatchedPost(String postId) throws PostNotFoundException {
+		Post post = lostFoundRepository.findById(postId).orElseThrow(()->new PostNotFoundException());
+		return convertPostToPostDto(post);
+	}
+	
+	@Override
+	public ModelAndView getFeedOfMatchingPosts(int page, String postId) throws Throwable {
+		Post post = lostFoundRepository.findById(postId).orElseThrow(()->new PostNotFoundException());
+		List<String> postIds = convertArrayToList(getListOfMatchedPostId(postId, post.getFlag()));
+		
+		List<PostDto> list = lostFoundRepository.findAll()
+				.stream()
+				.filter(p->postIds.contains(p.getId()))
+				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+				.map(p -> convertPostToPostDto(p))
+				.collect(Collectors.toList());
+		
+		int quantity = lostFoundConfiguration.getQuantity();
+		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
+		pagedListHolder.setPage(page);
+		pagedListHolder.setPageSize(quantity);
+		return createModelAndViewObject(pagedListHolder, page, quantity);
+	}
+	
 	
 	
 	
@@ -232,7 +257,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 // UTILS!
 //___________________________________________________________
 	
-	
+
 	private PostToConvertDto convertPostToPostToConvertDto (Post post) {
 		return PostToConvertDto.builder()
 				.id(post.getId())
@@ -360,7 +385,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
 			return newResponse.getBody().getPostIds();
 		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Saving post is failed");
+			throw new RuntimeException("Searching post is failed");
 		}
 	}
 	
@@ -378,9 +403,28 @@ public class LostFoundServiceImpl implements LostFoundService {
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
 			return newResponse.getBody().getPostIds();
 		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Saving post is failed");
+			throw new RuntimeException("Searching post is failed");
 		}
 	}
+
+	private String[] getListOfMatchedPostId(String postId, String flag) {
+		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+		try {
+			HttpHeaders newHeaders = new HttpHeaders();
+			newHeaders.add("Content-Type", "application/json");
+			//String url = "https://propets-.../search/v1/features";
+			String url = "http://localhost:8085/search/v1/all_matched"; //to Searching service
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+					.queryParam("postId",postId)
+					.queryParam("flag", flag);
+			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
+			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
+			return newResponse.getBody().getPostIds();
+		} catch (HttpClientErrorException e) {
+			throw new RuntimeException("Searching posts is failed");
+		}
+	}
+
 	
 
 }

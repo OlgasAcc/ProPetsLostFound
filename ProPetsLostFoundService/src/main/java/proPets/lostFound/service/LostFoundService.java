@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import org.springframework.web.servlet.ModelAndView;
 
 import proPets.lostFound.dto.NewPostDto;
+import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
 
 public interface LostFoundService {
@@ -26,5 +27,9 @@ public interface LostFoundService {
 	ModelAndView getPostsFeedMatchingByFeatures(int page, String postId, String flag);
 
 	void cleanPostsOfRemovedUser(String authorId);
+
+	PostDto getNewMatchedPost(String postId) throws Throwable;
+
+	ModelAndView getFeedOfMatchingPosts(int page, String postId) throws Throwable;
 
 }
