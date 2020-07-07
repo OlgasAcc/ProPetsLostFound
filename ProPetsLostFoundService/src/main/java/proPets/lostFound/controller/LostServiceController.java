@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
+import proPets.lostFound.dto.UserRemoveDto;
 import proPets.lostFound.service.LostFoundService;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -107,12 +108,10 @@ public class LostServiceController {
 
 	// for front: this request is working with "remove user" in Accounting service:
 	// it is cleaning the "tail of removed user" AFTER removing the user from
-	// account db
-	// in searching service db too
 
 	@DeleteMapping("/post/cleaner")
-	public void cleanPostsAndPresenceOfRemovedUser(@RequestParam("authorId") String authorId) {
-		lostFoundService.cleanPostsOfRemovedUser(authorId);
+	public String cleanPostsOfRemovedUser(@RequestBody UserRemoveDto userRemoveDto) {
+		return lostFoundService.cleanPostsOfRemovedUser(userRemoveDto);
 	}
 
 }

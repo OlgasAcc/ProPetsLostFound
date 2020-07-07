@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -17,9 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.RequestEntity.BodyBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,6 +32,7 @@ import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
 import proPets.lostFound.dto.PostToConvertDto;
 import proPets.lostFound.dto.SearchResponseDto;
+import proPets.lostFound.dto.UserRemoveDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Post;
@@ -90,12 +92,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
-				
-				ResponseEntity<String> response=removePostInSearchingServiceDB(postId);
-				if(response.getStatusCodeValue()!=200) {
-					throw new HttpServerErrorException(HttpStatus.REQUEST_TIMEOUT, "Removing was failed in Searching service database");
-				}
-				
+				removePostInSearchingServiceDB(postId);
 				int quantity = lostFoundConfiguration.getQuantity();
 				PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
 				return createModelAndViewObject(pagedListHolder, 0, quantity);
@@ -213,14 +210,12 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 	
 	@Override
-	public void cleanPostsOfRemovedUser(String authorId) {
+	public String cleanPostsOfRemovedUser(UserRemoveDto userRemoveDto) {
+		String authorId = userRemoveDto.getUserId();
 		lostFoundRepository.findAll().stream()
 					.filter(p->p.getAuthorData().getAuthorId().equalsIgnoreCase(authorId))
 					.forEach(post->lostFoundRepository.delete(post));	
-		ResponseEntity<String> response=removePostsOfAuthorInSearchingService (authorId);
-		if(response.getStatusCodeValue()!=200) {
-			throw new HttpServerErrorException(HttpStatus.REQUEST_TIMEOUT, "Removing was failed in Searching service database");
-		}
+		return authorId;
 	}
 	
 	@Override
@@ -249,10 +244,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	}
 	
 	
-	
-	
-	
-	
+		
 
 // UTILS!
 //___________________________________________________________
@@ -269,35 +261,20 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.picturesURLs(post.getPicturesURLs())
 				.build();
 	}
-	
-
-	private ResponseEntity<String> removePostInSearchingServiceDB(String postId) {
+		
+	@Async("processExecutor")
+	private CompletableFuture<String> removePostInSearchingServiceDB(String postId) {
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
-		// String url = "https://propets-.../security/v1/post";
+		// String url = "https://propets-.../search/v1/post";
 		String url = "http://localhost:8085/search/v1/post"; // to Searching service
 		try {
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("postId", postId);
 			RequestEntity<PostToConvertDto> request = new RequestEntity<>(HttpMethod.DELETE, builder.build().toUri());
 			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
-			return newResponse;
+			return CompletableFuture.completedFuture(newResponse.getBody());
 		} catch (HttpClientErrorException e) {
 			throw new RuntimeException("Removing post is failed");
 		}
-	}
-	
-	private ResponseEntity<String> removePostsOfAuthorInSearchingService(String authorId) {
-		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
-		// String url = "https://propets-.../security/v1/post";
-		String url = "http://localhost:8085/search/v1/cleaner"; // to Searching service
-		try {
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("authorId", authorId);
-			RequestEntity<PostToConvertDto> request = new RequestEntity<>(HttpMethod.DELETE, builder.build().toUri());
-			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
-			return newResponse;
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Removing post is failed");
-		}
-		
 	}
 	
 	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
