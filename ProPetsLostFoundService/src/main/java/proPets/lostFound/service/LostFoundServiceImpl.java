@@ -1,41 +1,27 @@
 package proPets.lostFound.service;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.PagedListHolder;
 import org.springframework.expression.AccessException;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.RequestEntity.BodyBuilder;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.LostFoundRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
-import proPets.lostFound.dto.PostToConvertDto;
-import proPets.lostFound.dto.SearchResponseDto;
 import proPets.lostFound.dto.UserRemoveDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Post;
+import proPets.lostFound.service.utils.LostFoundUtil;
 
 
 @Service
@@ -46,6 +32,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
+	
+	@Autowired
+	LostFoundUtil lostFoundUtil;
 
 	@Override
 	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException {
@@ -76,13 +65,13 @@ public class LostFoundServiceImpl implements LostFoundService {
 		post = lostFoundRepository.save(post);
 		int quantity = lostFoundConfiguration.getQuantity();
 
-		savePostInSearchingServiceDB(post);
+		lostFoundUtil.savePostInSearchingServiceDB(post);
 		// дожидается ответа: пост сохранен в Эластиксёрч
 
 		// отправить в Кафку асинхр запрос на поиск совпадений и рассылку
 
-		PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
-		return createModelAndViewObject(pagedListHolder, 0, quantity);
+		PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(0, quantity, flag);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, 0, quantity);
 	}
 	
 	@Override
@@ -92,10 +81,10 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
-				removePostInSearchingServiceDB(postId);
+				lostFoundUtil.removePostInSearchingServiceDB(postId);
 				int quantity = lostFoundConfiguration.getQuantity();
-				PagedListHolder<PostDto> pagedListHolder = createPageListHolder(0, quantity, flag);
-				return createModelAndViewObject(pagedListHolder, 0, quantity);
+				PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(0, quantity, flag);
+				return lostFoundUtil.createModelAndViewObject(pagedListHolder, 0, quantity);
 			} else
 				throw new AccessException("Access denied: you'r not author!");
 		} catch (Exception e) {
@@ -120,7 +109,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.setDateOfPublish(LocalDateTime.now());
 				
 				lostFoundRepository.save(post);
-				savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа
+				lostFoundUtil.savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа
 				
 				// отправить в Кафку асинхр запрос на поиск совпадений и рассылку
 				
@@ -136,8 +125,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Override
 	public ModelAndView getPostsFeed(int page, String flag) {	
 		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = createPageListHolder(page, quantity, flag);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
+		PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(page, quantity, flag);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	@Override
@@ -145,14 +134,14 @@ public class LostFoundServiceImpl implements LostFoundService {
 		List<PostDto> list = lostFoundRepository.findByType(type)
 				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
 				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
+				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
 		
 		int quantity = lostFoundConfiguration.getQuantity();
 		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
 		pagedListHolder.setPage(page);
 		pagedListHolder.setPageSize(quantity);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	@Override
@@ -160,52 +149,52 @@ public class LostFoundServiceImpl implements LostFoundService {
 		List<PostDto> list = lostFoundRepository.findByBreed(breed)
 				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
 				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
+				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
 		
 		int quantity = lostFoundConfiguration.getQuantity();
 		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
 		pagedListHolder.setPage(page);
 		pagedListHolder.setPageSize(quantity);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	@Override
 	public ModelAndView getPostsFeedMatchingByLocation(int page, String address, String flag) {
 
-		List<String> postIds = convertArrayToList(getListOfPostIdByAddress(address, flag));
+		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByAddress(address, flag));
 		
 		List<PostDto> list = lostFoundRepository.findAll()
 				.stream()
 				.filter(p->postIds.contains(p.getId()))
 				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
+				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
 		
 		int quantity = lostFoundConfiguration.getQuantity();
 		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
 		pagedListHolder.setPage(page);
 		pagedListHolder.setPageSize(quantity);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	@Override
 	public ModelAndView getPostsFeedMatchingByFeatures(int page, String postId, String flag) {
 
-		List<String> postIds = convertArrayToList(getListOfPostIdByDistFeatures(postId, flag));
+		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByDistFeatures(postId, flag));
 		
 		List<PostDto> list = lostFoundRepository.findAll()
 				.stream()
 				.filter(p->postIds.contains(p.getId()))
 				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
+				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
 		
 		int quantity = lostFoundConfiguration.getQuantity();
 		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
 		pagedListHolder.setPage(page);
 		pagedListHolder.setPageSize(quantity);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	
@@ -221,187 +210,27 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Override
 	public PostDto getNewMatchedPost(String postId) throws PostNotFoundException {
 		Post post = lostFoundRepository.findById(postId).orElseThrow(()->new PostNotFoundException());
-		return convertPostToPostDto(post);
+		return lostFoundUtil.convertPostToPostDto(post);
 	}
 	
 	@Override
 	public ModelAndView getFeedOfMatchingPosts(int page, String postId) throws Throwable {
 		Post post = lostFoundRepository.findById(postId).orElseThrow(()->new PostNotFoundException());
-		List<String> postIds = convertArrayToList(getListOfMatchedPostId(postId, post.getFlag()));
+		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfMatchedPostId(postId, post.getFlag()));
 		
 		List<PostDto> list = lostFoundRepository.findAll()
 				.stream()
 				.filter(p->postIds.contains(p.getId()))
 				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
+				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
 		
 		int quantity = lostFoundConfiguration.getQuantity();
 		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
 		pagedListHolder.setPage(page);
 		pagedListHolder.setPageSize(quantity);
-		return createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
-	
-	
-		
-
-// UTILS!
-//___________________________________________________________
-	
-
-	private PostToConvertDto convertPostToPostToConvertDto (Post post) {
-		return PostToConvertDto.builder()
-				.id(post.getId())
-				.flag(post.getFlag())
-				.email(post.getAuthorData().getAuthorId())
-				.type(post.getType())
-				.address(post.getAddress())
-				.distinctiveFeatures(post.getDistinctiveFeatures())
-				.picturesURLs(post.getPicturesURLs())
-				.build();
-	}
-		
-	@Async("processExecutor")
-	private CompletableFuture<String> removePostInSearchingServiceDB(String postId) {
-		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
-		// String url = "https://propets-.../search/v1/post";
-		String url = "http://localhost:8085/search/v1/post"; // to Searching service
-		try {
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("postId", postId);
-			RequestEntity<PostToConvertDto> request = new RequestEntity<>(HttpMethod.DELETE, builder.build().toUri());
-			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
-			return CompletableFuture.completedFuture(newResponse.getBody());
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Removing post is failed");
-		}
-	}
-	
-	private ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
-		PostToConvertDto body = convertPostToPostToConvertDto (post);
-
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
-
-		//String url = "https://propets-.../security/v1/post";
-		String url = "http://localhost:8085/search/v1/post"; //to Searching service
-		try {
-			HttpHeaders newHeaders = new HttpHeaders();
-			newHeaders.add("Content-Type", "application/json");
-			BodyBuilder requestBodyBuilder = RequestEntity.method(HttpMethod.POST, URI.create(url)).headers(newHeaders);
-			RequestEntity<PostToConvertDto> request = requestBodyBuilder.body(body);
-			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
-			return newResponse;
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Saving post is failed");
-		}
-	}
-	
-	
-	private List<String> convertArrayToList(String[] array){
-		 List<String> collection = new ArrayList<>();
-		for (int i = 0; i < array.length; i++) {
-			collection.add(array[i]);
-		}
-		 return collection;
-	}
-	
-	private PostDto convertPostToPostDto(Post post) {
-		return PostDto.builder()
-				.id(post.getId())
-				.type(post.getType())
-				.breed(post.getBreed())
-				.color(post.getColor())
-				.height(post.getHeight())
-				.sex(post.getSex())
-				.description(post.getDescription())
-				.address(post.getAddress())
-				.distinctiveFeatures(post.getDistinctiveFeatures())
-				.picturesURLs(post.getPicturesURLs())
-				.authorData(post.getAuthorData())
-				.dateOfPublish(post.getDateOfPublish())
-				.build();
-	}
-	
-	private PagedListHolder<PostDto> createPageListHolder(int pageNumber, int quantity, String flag) {	
-		List<PostDto> list = getUpdatedFilteredPostFeed(flag);
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<>(list);
-		pagedListHolder.setPage(pageNumber);
-		pagedListHolder.setPageSize(quantity);
-		return pagedListHolder;
-	}
-	
-	private ModelAndView createModelAndViewObject (PagedListHolder<PostDto> pagedListHolder, int page, int pageSize) {
-		ModelAndView mav = new ModelAndView("list of posts", HttpStatus.OK);
-		mav.addObject("pagedList", pagedListHolder.getPageList());
-		mav.addObject("page", 0);
-		mav.addObject("maxPage", pagedListHolder.getPageCount());
-		return mav;
-	}
-
-	private List<PostDto> getUpdatedFilteredPostFeed(String flag){
-		List<PostDto> list = lostFoundRepository.findAll().stream()
-				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
-				.collect(Collectors.toList());
-		return list;
-	}	
-
-	
-	private String[] getListOfPostIdByAddress(String address, String flag) {
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
-		try {
-			HttpHeaders newHeaders = new HttpHeaders();
-			newHeaders.add("Content-Type", "application/json");
-			//String url = "https://propets-.../search/v1/location";
-			String url = "http://localhost:8085/search/v1/location"; //to Searching service
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("address",address)
-					.queryParam("flag", flag);
-			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
-			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
-			return newResponse.getBody().getPostIds();
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Searching post is failed");
-		}
-	}
-	
-	private String[] getListOfPostIdByDistFeatures(String postId, String flag) {
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
-		try {
-			HttpHeaders newHeaders = new HttpHeaders();
-			newHeaders.add("Content-Type", "application/json");
-			//String url = "https://propets-.../search/v1/features";
-			String url = "http://localhost:8085/search/v1/features"; //to Searching service
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("postId",postId)
-					.queryParam("flag", flag);
-			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
-			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
-			return newResponse.getBody().getPostIds();
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Searching post is failed");
-		}
-	}
-
-	private String[] getListOfMatchedPostId(String postId, String flag) {
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
-		try {
-			HttpHeaders newHeaders = new HttpHeaders();
-			newHeaders.add("Content-Type", "application/json");
-			//String url = "https://propets-.../search/v1/features";
-			String url = "http://localhost:8085/search/v1/all_matched"; //to Searching service
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("postId",postId)
-					.queryParam("flag", flag);
-			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
-			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
-			return newResponse.getBody().getPostIds();
-		} catch (HttpClientErrorException e) {
-			throw new RuntimeException("Searching posts is failed");
-		}
-	}
-
 	
 
 }
