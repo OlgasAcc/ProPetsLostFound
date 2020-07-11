@@ -13,8 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.RequestEntity.BodyBuilder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -30,7 +30,6 @@ import proPets.lostFound.dto.SearchResponseDto;
 import proPets.lostFound.model.Post;
 
 @Component
-
 public class LostFoundUtil implements Serializable {
 
 	@Autowired

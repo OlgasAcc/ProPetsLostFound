@@ -9,8 +9,11 @@ import java.util.zip.DataFormatException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.PagedListHolder;
 import org.springframework.expression.AccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.ModelAndView;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dao.LostFoundRepository;
@@ -23,7 +26,6 @@ import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Post;
 import proPets.lostFound.service.utils.LostFoundUtil;
 
-
 @Service
 public class LostFoundServiceImpl implements LostFoundService {
 
@@ -35,9 +37,13 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 	@Autowired
 	LostFoundUtil lostFoundUtil;
+	
+	@Autowired
+	LostFoundDataExchangeService dataService;
+	
 
 	@Override
-	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException {
+	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException {
 		AuthorData authorData = AuthorData.builder()
 							.authorId(currentUserId)
 							.phone(newPostDto.getEmail())
@@ -65,10 +71,10 @@ public class LostFoundServiceImpl implements LostFoundService {
 		post = lostFoundRepository.save(post);
 		int quantity = lostFoundConfiguration.getQuantity();
 
-		lostFoundUtil.savePostInSearchingServiceDB(post);
-		// дожидается ответа: пост сохранен в Эластиксёрч
-
-		// отправить в Кафку асинхр запрос на поиск совпадений и рассылку
+		if(lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode()==HttpStatus.OK) {
+			//Kafka
+			dataService.sendPostData(post.getId());
+		}
 
 		PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(0, quantity, flag);
 		return lostFoundUtil.createModelAndViewObject(pagedListHolder, 0, quantity);
@@ -94,7 +100,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Override
 	public ModelAndView editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag)
-			throws Throwable {
+			throws URISyntaxException, JsonProcessingException, DataFormatException {
 		try {
 			Post post = lostFoundRepository.findById(postId).get();
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
@@ -111,7 +117,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 				lostFoundRepository.save(post);
 				lostFoundUtil.savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа
 				
-				// отправить в Кафку асинхр запрос на поиск совпадений и рассылку
+				//Kafka
+				dataService.sendPostData(post.getId());
 				
 				return getPostsFeed(0, flag);
 			} else

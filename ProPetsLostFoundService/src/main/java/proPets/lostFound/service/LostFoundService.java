@@ -1,8 +1,11 @@
 package proPets.lostFound.service;
 
 import java.net.URISyntaxException;
+import java.util.zip.DataFormatException;
 
 import org.springframework.web.servlet.ModelAndView;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
@@ -11,11 +14,11 @@ import proPets.lostFound.dto.UserRemoveDto;
 
 public interface LostFoundService {
 
-	ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException;
+	ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException;
 
 	ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable;
 
-	ModelAndView editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws Throwable;
+	ModelAndView editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws URISyntaxException, JsonProcessingException, DataFormatException;
 
 	ModelAndView getPostsFeed(int page, String flag);
 
