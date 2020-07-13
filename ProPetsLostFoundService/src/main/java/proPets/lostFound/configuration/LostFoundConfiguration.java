@@ -4,8 +4,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -15,8 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import proPets.lostFound.model.Post;
 
 @Configuration
-//@ManagedResource
-//@EnableBinding(Source.class)
+
 public class LostFoundConfiguration {
 
 	Map<String, Post> posts = new ConcurrentHashMap<>();
