@@ -44,7 +44,7 @@ public class JWTValidationFilter implements Filter {
 		String auth = request.getHeader("Authorization");
 		String method = request.getMethod();
 		
-		if (!checkPointCut(path, method) && checkStartPath(path)) {
+		if (!checkPointCut(path, method) && !checkStartPathAdditional(path) && checkStartPath(path)) {
 			if (auth.startsWith("Bearer")) {
 				String newToken;
 				String email;
@@ -100,6 +100,12 @@ public class JWTValidationFilter implements Filter {
 	private boolean checkStartPath(String path) {
 		boolean check = path.startsWith("/lost/v1/post");
 		check = check || path.startsWith("/found/v1/post");
+		return check;
+	}
+	
+	private boolean checkStartPathAdditional(String path) {
+		boolean check = path.startsWith("/lost/v1/all_matched") || path.startsWith("lost/v1/new_matched");
+		check = check || path.startsWith("/found/v1/all_matched") || path.startsWith("found/v1/new_matched");
 		return check;
 	}
 

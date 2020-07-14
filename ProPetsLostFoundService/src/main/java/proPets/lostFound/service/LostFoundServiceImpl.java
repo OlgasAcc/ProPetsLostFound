@@ -16,7 +16,7 @@ import org.springframework.web.servlet.ModelAndView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
-import proPets.lostFound.dao.LostFoundRepository;
+import proPets.lostFound.dao.LostFoundMongoRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
@@ -30,7 +30,7 @@ import proPets.lostFound.service.utils.LostFoundUtil;
 public class LostFoundServiceImpl implements LostFoundService {
 
 	@Autowired
-	LostFoundRepository lostFoundRepository;
+	LostFoundMongoRepository lostFoundRepository;
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;

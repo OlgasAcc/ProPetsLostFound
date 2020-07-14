@@ -23,7 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
-import proPets.lostFound.dao.LostFoundRepository;
+import proPets.lostFound.dao.LostFoundMongoRepository;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostToConvertDto;
 import proPets.lostFound.dto.SearchResponseDto;
@@ -33,7 +33,7 @@ import proPets.lostFound.model.Post;
 public class LostFoundUtil implements Serializable {
 
 	@Autowired
-	LostFoundRepository lostFoundRepository;
+	LostFoundMongoRepository lostFoundRepository;
 	
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
@@ -191,4 +191,6 @@ public class LostFoundUtil implements Serializable {
 			throw new RuntimeException("Searching posts is failed");
 		}
 	}
+	
+
 }
