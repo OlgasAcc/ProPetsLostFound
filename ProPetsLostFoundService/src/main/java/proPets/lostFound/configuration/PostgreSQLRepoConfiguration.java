@@ -1,69 +1,80 @@
 package proPets.lostFound.configuration;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.hibernate.jpa.HibernatePersistenceProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.transaction.PlatformTransactionManager;
-
-import proPets.lostFound.dao.LostFoundJPARepository;
-import proPets.lostFound.model.AccessCode;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@PropertySource({ "application.properties" })
-@EnableJpaRepositories(basePackageClasses = LostFoundJPARepository.class)
+@PropertySource({ "classpath:application.properties" })
+@EnableJpaRepositories(basePackages = "proPets.lostFound.dao.LostFoundJPARepository", transactionManagerRef = "jpaTransactionManager")
+@EnableTransactionManagement
 
 public class PostgreSQLRepoConfiguration {
+	
+	@Autowired
+	private Environment env;
+	
+	private static final String[] ENTITYMANAGER_PACKAGES_TO_SCAN = { "proPets.lostFound.model" };
 
-	@Primary
+	@Bean
+	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+
+	LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+	entityManagerFactoryBean.setJpaVendorAdapter(vendorAdaptor());
+	entityManagerFactoryBean.setDataSource(dataSource());
+	entityManagerFactoryBean.setPersistenceProviderClass(HibernatePersistenceProvider.class);
+	entityManagerFactoryBean.setPackagesToScan(ENTITYMANAGER_PACKAGES_TO_SCAN);
+	entityManagerFactoryBean.setJpaProperties(addProperties());
+	return entityManagerFactoryBean;
+	}
+	
+	@Bean
+	public JpaTransactionManager jpaTransactionManager() {
+	JpaTransactionManager transactionManager = new JpaTransactionManager();
+	transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());
+	return transactionManager;
+	}
+ 
 	@Bean
 	@ConfigurationProperties(prefix = "spring.datasource")
-	public DataSource postgresqlDataSource() {
-		return DataSourceBuilder.create().build();
+	public DataSource dataSource() {
+ 
+		String username = env.getProperty("spring.datasource.username");
+		String password = env.getProperty("spring.datasource.password");
+		String driverClass = env.getProperty("spring.datasource.driver-class-name");
+		String url = env.getProperty("spring.datasource.url");
+ 
+		return DataSourceBuilder.create().username(username).password(password).url(url).driverClassName(driverClass)
+				.build();
 	}
-
-	@Bean(name = "accessCodeEntityManager")
-	public LocalContainerEntityManagerFactoryBean postgresqlEntityManagerFactory(EntityManagerFactoryBuilder builder) {
-		return builder.dataSource(postgresqlDataSource()).properties(hibernateProperties()).packages(AccessCode.class)
-				.persistenceUnit("userPU").build();
+ 
+	private HibernateJpaVendorAdapter vendorAdaptor() {
+		HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+		return vendorAdapter;
 	}
-
-	@Bean(name = "accessCodeTransactionManager")
-	public PlatformTransactionManager postgresqlTransactionManager(
-			@Qualifier("userEntityManager") EntityManagerFactory entityManagerFactory) {
-		return new JpaTransactionManager(entityManagerFactory);
+	
+	private Properties addProperties() {
+		Properties properties = new Properties();
+		properties.setProperty("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
+		properties.setProperty("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect"));
+		properties.setProperty("hibernate.show_sql", env.getProperty("spring.jpa.show-sql"));
+		//properties.setProperty("hibernate.format_sql", env.getProperty("spring.jpa.properties.hibernate.format_sql"));
+		// we can add 
+		return properties;
 	}
-
-	private Map<String, ?> hibernateProperties() {
-
-		Resource resource = new ClassPathResource("hibernate.properties");
-
-		try {
-			Properties properties = PropertiesLoaderUtils.loadProperties(resource);
-
-			return properties.entrySet().stream()
-					.collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue()));
-		} catch (IOException e) {
-			return new HashMap<>();
-		}
-	}
+  
 }

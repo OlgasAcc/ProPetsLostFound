@@ -193,7 +193,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Override
 	public void saveAccessCode(String accessCode) {
-		AccessCode newCode = AccessCode.builder().accCode(accessCode).build();
+		AccessCode newCode = new AccessCode(accessCode);
 		lostFoundJPARepository.save(newCode);		
 	}
 }
