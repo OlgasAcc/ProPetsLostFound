@@ -12,13 +12,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import proPets.lostFound.dao.LostFoundJPARepository;
+import proPets.lostFound.model.AccessCode;
 
-@Component
-@Order(30)
+//@Component
+//@Order(30)
 
 public class AccessCodeValidationFilter implements Filter {
 
@@ -52,7 +51,7 @@ public class AccessCodeValidationFilter implements Filter {
 	}
 
 	private boolean checkIfAccessCodeExists(String accessCode) {
-		String id = lostFoundJPARepository.findIdByAccessCode(accessCode).orElse(null);
+		AccessCode id = lostFoundJPARepository.findById(accessCode).orElse(null);
 		if (id != null) {
 			return true;
 		} else {

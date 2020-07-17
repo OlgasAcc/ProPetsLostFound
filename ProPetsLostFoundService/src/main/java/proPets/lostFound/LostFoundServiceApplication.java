@@ -21,7 +21,7 @@ public class LostFoundServiceApplication {
         threadPoolTaskExecutor.afterPropertiesSet();
         return threadPoolTaskExecutor;
     }
-	
+
 	public static void main(String[] args) {
 		SpringApplication.run(LostFoundServiceApplication.class, args);
 	}

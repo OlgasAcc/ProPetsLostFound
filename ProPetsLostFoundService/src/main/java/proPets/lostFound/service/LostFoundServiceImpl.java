@@ -7,21 +7,24 @@ import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.support.PagedListHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.expression.AccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
+import proPets.lostFound.dao.LostFoundJPARepository;
 import proPets.lostFound.dao.LostFoundMongoRepository;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
 import proPets.lostFound.dto.UserRemoveDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
+import proPets.lostFound.model.AccessCode;
 import proPets.lostFound.model.AuthorData;
 import proPets.lostFound.model.Post;
 import proPets.lostFound.service.utils.LostFoundUtil;
@@ -31,6 +34,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 
 	@Autowired
 	LostFoundMongoRepository lostFoundRepository;
+	
+	@Autowired
+	LostFoundJPARepository lostFoundJPARepository;
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
@@ -43,7 +49,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 
 	@Override
-	public ModelAndView addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException {
+	public List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException {
 		AuthorData authorData = AuthorData.builder()
 							.authorId(currentUserId)
 							.phone(newPostDto.getEmail())
@@ -69,37 +75,29 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.build();
 
 		post = lostFoundRepository.save(post);
-		int quantity = lostFoundConfiguration.getQuantity();
 
 		if(lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode()==HttpStatus.OK) {
 			//Kafka
 			dataService.sendPostData(post.getId());
 		}
 
-		PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(0, quantity, flag);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, 0, quantity);
+		return getPostsFeed(0, flag);
 	}
 	
 	@Override
-	public ModelAndView removePost(String currentUserId, String postId, String flag) throws Throwable {
-		try {
+	public List<PostDto> removePost(String currentUserId, String postId, String flag) throws Throwable {
 			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
 
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
 				lostFoundUtil.removePostInSearchingServiceDB(postId);
-				int quantity = lostFoundConfiguration.getQuantity();
-				PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(0, quantity, flag);
-				return lostFoundUtil.createModelAndViewObject(pagedListHolder, 0, quantity);
+				return getPostsFeed(0, flag);
 			} else
 				throw new AccessException("Access denied: you'r not author!");
-		} catch (Exception e) {
-			throw new PostNotFoundException();
-		}
 	}
 
 	@Override
-	public ModelAndView editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag)
+	public List<PostDto> editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag)
 			throws URISyntaxException, JsonProcessingException, DataFormatException {
 		try {
 			Post post = lostFoundRepository.findById(postId).get();
@@ -130,78 +128,44 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 	//need to save current page number in Store (front) for updating page or repeat the last request
 	@Override
-	public ModelAndView getPostsFeed(int page, String flag) {	
+	public List<PostDto> getPostsFeed(int page, String flag) {	
 		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = lostFoundUtil.createPageListHolder(page, quantity, flag);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
+		PageRequest pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
+		return lostFoundUtil.getListAndConvertToListOfPostDto(pageReq);
 	}
 	
 	@Override
-	public ModelAndView getPostsFeedMatchingByType(int page, String type, String flag) {
-		List<PostDto> list = lostFoundRepository.findByType(type)
-				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+	public List<PostDto> getPostsFeedMatchingByType(int page, String type, String flag) {
+		int quantity = lostFoundConfiguration.getQuantity();
+		PageRequest pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
+		Page<Post> posts = lostFoundRepository.findByTypeLikeAndFlagLike(type, flag, pageReq);
+		return posts.getContent()
+				.stream()
 				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
-		
-		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	@Override
-	public ModelAndView getPostsFeedMatchingByBreed(int page, String breed, String flag) {
-		List<PostDto> list = lostFoundRepository.findByBreed(breed)
-				.filter(post -> post.getFlag().equalsIgnoreCase(flag))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+	public List<PostDto> getPostsFeedMatchingByBreed(int page, String breed, String flag) {
+		int quantity = lostFoundConfiguration.getQuantity();
+		PageRequest pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
+		Page<Post> posts = lostFoundRepository.findByBreedLikeAndFlagLike(breed, flag, pageReq);
+		return posts.getContent()
+				.stream()
 				.map(p -> lostFoundUtil.convertPostToPostDto(p))
 				.collect(Collectors.toList());
-		
-		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
 	}
 	
 	@Override
-	public ModelAndView getPostsFeedMatchingByLocation(int page, String address, String flag) {
-
+	public List<PostDto> getPostsFeedMatchingByLocation(int page, String address, String flag) {		
 		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByAddress(address, flag));
-		
-		List<PostDto> list = lostFoundRepository.findAll()
-				.stream()
-				.filter(p->postIds.contains(p.getId()))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> lostFoundUtil.convertPostToPostDto(p))
-				.collect(Collectors.toList());
-		
-		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds,page);
 	}
 	
 	@Override
-	public ModelAndView getPostsFeedMatchingByFeatures(int page, String postId, String flag) {
-
-		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByDistFeatures(postId, flag));
-		
-		List<PostDto> list = lostFoundRepository.findAll()
-				.stream()
-				.filter(p->postIds.contains(p.getId()))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> lostFoundUtil.convertPostToPostDto(p))
-				.collect(Collectors.toList());
-		
-		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
+	public List<PostDto> getPostsFeedMatchingByFeatures(int page, String postId, String flag) {
+		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByDistFeatures(postId, flag));		
+		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds,page);
 	}
 	
 	
@@ -221,23 +185,15 @@ public class LostFoundServiceImpl implements LostFoundService {
 	}
 	
 	@Override
-	public ModelAndView getFeedOfMatchingPosts(int page, String postId) throws Throwable {
+	public List<PostDto> getFeedOfMatchingPosts(int page, String postId) throws Throwable {
 		Post post = lostFoundRepository.findById(postId).orElseThrow(()->new PostNotFoundException());
 		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfMatchedPostId(postId, post.getFlag()));
-		
-		List<PostDto> list = lostFoundRepository.findAll()
-				.stream()
-				.filter(p->postIds.contains(p.getId()))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> lostFoundUtil.convertPostToPostDto(p))
-				.collect(Collectors.toList());
-		
-		int quantity = lostFoundConfiguration.getQuantity();
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<PostDto>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return lostFoundUtil.createModelAndViewObject(pagedListHolder, page, quantity);
+		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds,page);
 	}
-	
 
+	@Override
+	public void saveAccessCode(String accessCode) {
+		AccessCode newCode = AccessCode.builder().accCode(accessCode).build();
+		lostFoundJPARepository.save(newCode);		
+	}
 }
