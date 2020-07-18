@@ -15,8 +15,6 @@ public interface LostFoundMongoRepository extends MongoRepository<Post, String> 
 	Page<Post> findAll(Pageable pageReq);
 	
 	//Page<Post> findAll(Query query, Pageable pageReq);
-	
-	//Page<Post>findByIdContaining(List<String>postIds, Pageable pageReq);
 
 	Page<Post> findByTypeLikeAndFlagLike(String type, String flag, Pageable pageReq);
 	

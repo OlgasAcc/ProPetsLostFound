@@ -104,7 +104,7 @@ public class JWTValidationFilter implements Filter {
 	}
 	
 	private boolean checkStartPathAdditional(String path) {
-		boolean check = path.startsWith("/lost/v1/all_matched") || path.startsWith("lost/v1/new_matched");
+		boolean check = path.startsWith("/lost/v1/all_matched") || path.startsWith("lost/v1/new_matched")|| path.startsWith("lost/v1/accessCode");
 		check = check || path.startsWith("/found/v1/all_matched") || path.startsWith("found/v1/new_matched");
 		return check;
 	}

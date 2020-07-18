@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.expression.AccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -47,7 +48,12 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Autowired
 	LostFoundDataExchangeService dataService;
 	
-
+	//@PersistenceContext
+	//EntityManager entityManager;
+	
+	@Autowired
+	JpaTransactionManager jpaTransactionManager;
+	
 	@Override
 	public List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException {
 		AuthorData authorData = AuthorData.builder()
@@ -58,7 +64,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 							.authorAvatar(newPostDto.getAuthorAvatar())
 							.authorName(newPostDto.getAuthorName())
 							.build();
-
 		Post post = Post.builder()
 				.flag(flag)
 				.type(newPostDto.getType())
@@ -73,21 +78,17 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.authorData(authorData)
 				.dateOfPublish(LocalDateTime.now())
 				.build();
-
 		post = lostFoundRepository.save(post);
-
-		if(lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode()==HttpStatus.OK) {
-			//Kafka
+		if (lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode() == HttpStatus.OK) {
+			// Kafka
 			dataService.sendPostData(post.getId());
 		}
-
 		return getPostsFeed(0, flag);
 	}
 	
 	@Override
 	public List<PostDto> removePost(String currentUserId, String postId, String flag) throws Throwable {
 			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				lostFoundRepository.delete(post);
 				lostFoundUtil.removePostInSearchingServiceDB(postId);
@@ -95,12 +96,12 @@ public class LostFoundServiceImpl implements LostFoundService {
 			} else
 				throw new AccessException("Access denied: you'r not author!");
 	}
-
+	
 	@Override
 	public List<PostDto> editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag)
 			throws URISyntaxException, JsonProcessingException, DataFormatException {
 		try {
-			Post post = lostFoundRepository.findById(postId).get();
+			Post post = lostFoundRepository.findById(postId).orElseThrow(()->new PostNotFoundException());
 			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 				post.setBreed(postEditDto.getBreed() != null ? postEditDto.getBreed() : post.getBreed());
 				post.setDescription(postEditDto.getDescription() != null ? postEditDto.getDescription() : post.getDescription());
@@ -113,11 +114,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.setDateOfPublish(LocalDateTime.now());
 				
 				lostFoundRepository.save(post);
-				lostFoundUtil.savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа
-				
+				lostFoundUtil.savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа				
 				//Kafka
-				dataService.sendPostData(post.getId());
-				
+				dataService.sendPostData(post.getId());				
 				return getPostsFeed(0, flag);
 			} else
 				throw new AccessException("Access denied: you'r not author!");

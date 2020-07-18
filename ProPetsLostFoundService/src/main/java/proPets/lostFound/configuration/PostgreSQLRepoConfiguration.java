@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @PropertySource({ "classpath:application.properties" })
-@EnableJpaRepositories(basePackages = "proPets.lostFound.dao.LostFoundJPARepository", transactionManagerRef = "jpaTransactionManager")
+@EnableJpaRepositories(basePackages = "proPets.lostFound.dao.LostFoundJPARepository", transactionManagerRef = "transactionManager")
 @EnableTransactionManagement
 
 public class PostgreSQLRepoConfiguration {
@@ -42,7 +42,7 @@ public class PostgreSQLRepoConfiguration {
 	return entityManagerFactoryBean;
 	}
 	
-	@Bean
+	@Bean (name="transactionManager")
 	public JpaTransactionManager jpaTransactionManager() {
 	JpaTransactionManager transactionManager = new JpaTransactionManager();
 	transactionManager.setEntityManagerFactory(entityManagerFactory().getObject());

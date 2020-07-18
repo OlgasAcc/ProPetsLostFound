@@ -85,8 +85,6 @@ public class LostServiceController {
 		return lostFoundService.getPostsFeedMatchingByFeatures(page, address, flag);
 	}
 
-	// TODO!!! убрать из фильтра валидации этот эндпоинт
-	// добавить одноразовый код (?) вторым параметром, базу в ЛФ и фильтр
 	// для отрисовки совпавших постов для автора нового поста (переход по ссылке из
 	// письма на фронт, оттуда - запрос сюда)
 
@@ -96,8 +94,7 @@ public class LostServiceController {
 		return lostFoundService.getFeedOfMatchingPosts(page, postId);
 	}
 
-	// TODO!!! убрать из фильтра валидации этот эндпоинт
-	// добавить одноразовый код (?) вторым параметром, базу в ЛФ и фильтр
+
 	// для отрисовки 1 нового поста для всех авторов, с постом которых он совпал
 	// (переход по ссылке на фронт - оттуда - запрос сюда)
 
@@ -115,8 +112,9 @@ public class LostServiceController {
 	}
 	
 	@PostMapping("/accessCode")
-	public void saveAccessCode(@RequestParam ("accessCode") String accessCode) throws Exception {
+	public String saveAccessCode(@RequestParam ("accessCode") String accessCode) throws Exception {
 		lostFoundService.saveAccessCode(accessCode);
+		return accessCode;
 	}
 
 }
