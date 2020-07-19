@@ -72,8 +72,7 @@ public class PostgreSQLRepoConfiguration {
 		properties.setProperty("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
 		properties.setProperty("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect"));
 		properties.setProperty("hibernate.show_sql", env.getProperty("spring.jpa.show-sql"));
-		//properties.setProperty("hibernate.format_sql", env.getProperty("spring.jpa.properties.hibernate.format_sql"));
-		// we can add 
+
 		return properties;
 	}
   

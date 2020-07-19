@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import proPets.lostFound.configuration.BeanConfiguration;
+import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
@@ -24,13 +27,22 @@ import proPets.lostFound.service.LostFoundService;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
-@RequestMapping("/lost/v1")
+@RequestMapping("/lostFound/lost/v1")
 
 public class LostServiceController {
 	final String flag = "lost";
 
 	@Autowired
 	LostFoundService lostFoundService;
+	
+	@Autowired
+	LostFoundConfiguration lostFoundConfiguration;
+
+	@RefreshScope
+	@GetMapping("/config")
+	public  BeanConfiguration getRefreshedData() {
+		return new BeanConfiguration(lostFoundConfiguration.getQuantity());
+	}
 
 	@PostMapping("/post")
 	public List<PostDto> addPost(@RequestHeader(value = "Authorization") String authorization,

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import proPets.lostFound.model.Post;
 
 @Configuration
-
+@RefreshScope
 public class LostFoundConfiguration {
 
 	Map<String, Post> posts = new ConcurrentHashMap<>();
@@ -31,6 +32,7 @@ public class LostFoundConfiguration {
 	@Value("${post.quantity}")
 	int quantity;
 	
+	@RefreshScope
 	public int getQuantity() {
 		return quantity;
 	}
