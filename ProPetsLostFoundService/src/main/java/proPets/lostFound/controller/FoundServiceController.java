@@ -41,7 +41,7 @@ public class FoundServiceController {
 	@RefreshScope
 	@GetMapping("/config")
 	public  BeanConfiguration getRefreshedData() {
-		return new BeanConfiguration(lostFoundConfiguration.getQuantity());
+		return new BeanConfiguration(lostFoundConfiguration.getQuantity(), lostFoundConfiguration.getBaseJWTUrl());
 	}
 	
 	@PostMapping("/post")

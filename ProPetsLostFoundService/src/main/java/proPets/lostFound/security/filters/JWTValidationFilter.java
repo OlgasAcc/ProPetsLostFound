@@ -92,20 +92,20 @@ public class JWTValidationFilter implements Filter {
 	}
 
 	private boolean checkPointCut(String path, String method) {
-		boolean check = "/lost/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method);
-		check = check || ("/found/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method));
+		boolean check = "/lostFound/lost/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method);
+		check = check || ("/lostFound/found/v1/post/cleaner".equalsIgnoreCase(path) && "DELETE".equalsIgnoreCase(method));
 		return check;
 	}
 
 	private boolean checkStartPath(String path) {
-		boolean check = path.startsWith("/lost/v1/post");
-		check = check || path.startsWith("/found/v1/post");
+		boolean check = path.startsWith("/lostFound/lost/v1/post");
+		check = check || path.startsWith("/lostFound/found/v1/post");
 		return check;
 	}
 	
 	private boolean checkStartPathAdditional(String path) {
-		boolean check = path.startsWith("/lost/v1/all_matched") || path.startsWith("lost/v1/new_matched")|| path.startsWith("lost/v1/accessCode");
-		check = check || path.startsWith("/found/v1/all_matched") || path.startsWith("found/v1/new_matched");
+		boolean check = path.startsWith("/lostFound/lost/v1/all_matched") || path.startsWith("/lostFound/lost/v1/new_matched")|| path.startsWith("lost/v1/accessCode");
+		check = check || path.startsWith("/lostFound/found/v1/all_matched") || path.startsWith("/lostFound/found/v1/new_matched");
 		return check;
 	}
 
@@ -116,8 +116,7 @@ public class JWTValidationFilter implements Filter {
 		headers.add("Authorization", auth);
 		headers.add("Content-Type", "application/json");
 
-		String url = "https://propets-accounting-service.herokuapp.com/account/v1/verify";
-		//String url = "http://localhost:8080/account/v1/verify";
+		String url = lostFoundConfiguration.getBaseJWTUrl() + "account/v1/verify";
 		try {
 			RequestEntity<Object> request = new RequestEntity<>(headers, HttpMethod.POST, URI.create(url));
 			ResponseEntity<AuthResponse> newResponse = restTemplate.exchange(request, AuthResponse.class);

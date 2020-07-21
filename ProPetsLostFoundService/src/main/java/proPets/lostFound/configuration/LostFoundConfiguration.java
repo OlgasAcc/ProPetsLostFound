@@ -18,12 +18,12 @@ import proPets.lostFound.model.Post;
 public class LostFoundConfiguration {
 
 	Map<String, Post> posts = new ConcurrentHashMap<>();
-	
+
 	@Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
 	}
-	
+
 	@Bean
 	public ObjectMapper objectMapper() {
 		return new ObjectMapper();
@@ -31,10 +31,18 @@ public class LostFoundConfiguration {
 
 	@Value("${post.quantity}")
 	int quantity;
-	
+
 	@RefreshScope
 	public int getQuantity() {
 		return quantity;
 	}
-	
+
+	@Value("${base.jwt.url}")
+	String baseJWTUrl;
+
+	@RefreshScope
+	public String getBaseJWTUrl() {
+		return baseJWTUrl;
+	}
+
 }
