@@ -41,7 +41,7 @@ public class LostServiceController {
 	@RefreshScope
 	@GetMapping("/config")
 	public  BeanConfiguration getRefreshedData() {
-		return new BeanConfiguration(lostFoundConfiguration.getQuantity(),lostFoundConfiguration.getBaseJWTUrl());
+		return new BeanConfiguration(lostFoundConfiguration.getQuantity(),lostFoundConfiguration.getBaseJWTUrl(),lostFoundConfiguration.getBaseSearchUrl());
 	}
 
 	@PostMapping("/post")

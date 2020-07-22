@@ -63,8 +63,8 @@ public class LostFoundUtil implements Serializable {
 	@Async("processExecutor")
 	public CompletableFuture<String> removePostInSearchingServiceDB(String postId) {
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
-		// String url = "https://propets-.../search/v1/post";
-		String url = "http://localhost:8085/search/v1/post"; // to Searching service
+
+		String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/post"; // to Searching service
 		try {
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("postId", postId);
 			RequestEntity<PostToConvertDto> request = new RequestEntity<>(HttpMethod.DELETE, builder.build().toUri());
@@ -80,8 +80,7 @@ public class LostFoundUtil implements Serializable {
 
 		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
 
-		//String url = "https://propets-.../security/v1/post";
-		String url = "http://localhost:8085/search/v1/post"; //to Searching service
+		String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/post"; //to Searching service
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
@@ -141,8 +140,8 @@ public class LostFoundUtil implements Serializable {
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
-			//String url = "https://propets-.../search/v1/location";
-			String url = "http://localhost:8085/search/v1/location"; //to Searching service
+
+			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/location"; //to Searching service
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
 					.queryParam("address",address)
 					.queryParam("flag", flag);
@@ -159,8 +158,8 @@ public class LostFoundUtil implements Serializable {
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
-			//String url = "https://propets-.../search/v1/features";
-			String url = "http://localhost:8085/search/v1/features"; //to Searching service
+
+			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/features"; //to Searching service
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
 					.queryParam("postId",postId)
 					.queryParam("flag", flag);
@@ -177,8 +176,8 @@ public class LostFoundUtil implements Serializable {
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
-			//String url = "https://propets-.../search/v1/features";
-			String url = "http://localhost:8085/search/v1/all_matched"; //to Searching service
+
+			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/all_matched"; //to Searching service
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
 					.queryParam("postId",postId)
 					.queryParam("flag", flag);

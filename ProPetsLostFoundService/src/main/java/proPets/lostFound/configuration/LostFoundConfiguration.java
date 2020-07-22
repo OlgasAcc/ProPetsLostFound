@@ -44,5 +44,13 @@ public class LostFoundConfiguration {
 	public String getBaseJWTUrl() {
 		return baseJWTUrl;
 	}
+	
+	@Value("${base.search.url}")
+	String baseSearchUrl;
+
+	@RefreshScope
+	public String getBaseSearchUrl() {
+		return baseSearchUrl;
+	}
 
 }
