@@ -92,8 +92,7 @@ public class LostFoundUtil implements Serializable {
 			throw new RuntimeException("Saving post is failed");
 		}
 	}
-	
-	
+		
 	public List<String> convertArrayToList(String[] array){
 		 List<String> collection = new ArrayList<>();
 		for (int i = 0; i < array.length; i++) {
@@ -143,7 +142,7 @@ public class LostFoundUtil implements Serializable {
 
 			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/location"; //to Searching service
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("address",address)
+					.queryParam("address", address)
 					.queryParam("flag", flag);
 			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
@@ -187,32 +186,7 @@ public class LostFoundUtil implements Serializable {
 		} catch (HttpClientErrorException e) {
 			throw new RuntimeException("Searching posts is failed");
 		}
-	}
-	
+	}	
 }
 
-//public PagedListHolder<PostDto> createPageListHolder(int pageNumber, int quantity, String flag) {	
-//List<PostDto> list = getUpdatedFilteredPostFeed(flag);
-//PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<>(list);
-//pagedListHolder.setPage(pageNumber);
-//pagedListHolder.setPageSize(quantity);
-//return pagedListHolder;
-//}
-//
-//public ModelAndView createModelAndViewObject (PagedListHolder<PostDto> pagedListHolder, int page, int pageSize) {
-//ModelAndView mav = new ModelAndView("list of posts", HttpStatus.OK);
-//mav.addObject("pagedList", pagedListHolder.getPageList());
-//mav.addObject("page", 0);
-//mav.addObject("maxPage", pagedListHolder.getPageCount());
-//return mav;
-//}
-//
-//public List<PostDto> getUpdatedFilteredPostFeed(String flag){
-//List<PostDto> list = lostFoundRepository.findAll().stream()
-//		.filter(post -> post.getFlag().equalsIgnoreCase(flag))
-//		.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-//		.map(p -> convertPostToPostDto(p))
-//		.collect(Collectors.toList());
-//return list;
-//}	
 
