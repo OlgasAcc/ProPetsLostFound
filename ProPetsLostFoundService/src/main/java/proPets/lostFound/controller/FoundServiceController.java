@@ -2,6 +2,7 @@ package proPets.lostFound.controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -65,8 +66,8 @@ public class FoundServiceController {
 
 	@GetMapping("/post/feed")
 	public List<PostDto> getUserPostsFeed(@RequestHeader(value = "Authorization") String authorization,
-			@RequestParam("page") int page) {
-		return lostFoundService.getPostsFeed(page, flag);
+			@RequestParam("page") int page) throws InterruptedException, ExecutionException {
+		return lostFoundService.getPostsFeed(page, flag).get();
 	}
 
 	@GetMapping("/post/feed/type")

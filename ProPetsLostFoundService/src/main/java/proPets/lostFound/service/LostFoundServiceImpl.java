@@ -3,6 +3,9 @@ package proPets.lostFound.service;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
@@ -55,7 +58,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	JpaTransactionManager jpaTransactionManager;
 	
 	@Override
-	public List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException {
+	public List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException, InterruptedException, ExecutionException {
 		AuthorData authorData = AuthorData.builder()
 							.authorId(currentUserId)
 							.phone(newPostDto.getEmail())
@@ -78,23 +81,36 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.authorData(authorData)
 				.dateOfPublish(LocalDateTime.now())
 				.build();
-		post = lostFoundRepository.save(post);
-		if (lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode() == HttpStatus.OK) {
-			// Kafka
-			dataService.sendPostData(post.getId());
-		}
-		return getPostsFeed(0, flag);
+		//post = lostFoundRepository.save(post);
+		
+		CompletableFuture<List<PostDto>> result = lostFoundUtil.savePostInDatabase(post)
+		        .thenApply(p -> lostFoundUtil.savePostInSearchingServiceDB(post))		        
+		        .thenComposeAsync(p->getPostsFeed(0, flag));
+		
+		return result.get();
+		//if (lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode() == HttpStatus.OK) {
+		//	// Kafka
+		//	dataService.sendPostData(post.getId());
+		//}
+		//return getPostsFeed(0, flag);
 	}
 	
 	@Override
 	public List<PostDto> removePost(String currentUserId, String postId, String flag) throws Throwable {
-			Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-			if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
-				lostFoundRepository.delete(post);
-				lostFoundUtil.removePostInSearchingServiceDB(postId);
-				return getPostsFeed(0, flag);
-			} else
-				throw new AccessException("Access denied: you'r not author!");
+		Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
+		if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
+			CompletableFuture<List<PostDto>> result = lostFoundUtil.deletePostFromDatabase(post)
+					.thenApply(p -> lostFoundUtil.removePostInSearchingServiceDB(postId))
+					.thenComposeAsync(p -> getPostsFeed(0, flag));
+			return result.get();
+
+			// lostFoundRepository.delete(post);
+			// lostFoundUtil.removePostInSearchingServiceDB(postId);
+			// return getPostsFeed(0, flag);
+			
+		} else {
+			throw new AccessException("Access denied: you'r not author!");
+		}			
 	}
 	
 	@Override
@@ -116,8 +132,10 @@ public class LostFoundServiceImpl implements LostFoundService {
 				lostFoundRepository.save(post);
 				lostFoundUtil.savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа				
 				//Kafka
-				dataService.sendPostData(post.getId());				
-				return getPostsFeed(0, flag);
+				dataService.sendPostData(post.getId());	
+				return null;
+				//NEED BE UPDATED!!!! 
+				//return getPostsFeed(0, flag);
 			} else
 				throw new AccessException("Access denied: you'r not author!");
 		} catch (Exception e) {
@@ -127,7 +145,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	
 	//need to save current page number in Store (front) for updating page or repeat the last request
 	@Override
-	public List<PostDto> getPostsFeed(int page, String flag) {	
+	public CompletableFuture<List<PostDto>> getPostsFeed(int page, String flag) {	
 		int quantity = lostFoundConfiguration.getQuantity();
 		PageRequest pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
 		return lostFoundUtil.getListAndConvertToListOfPostDto(pageReq);

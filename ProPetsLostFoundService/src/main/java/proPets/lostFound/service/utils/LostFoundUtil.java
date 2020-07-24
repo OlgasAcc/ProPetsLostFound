@@ -53,11 +53,14 @@ public class LostFoundUtil implements Serializable {
 				.build();
 	}
 	
-	public List<PostDto> getListAndConvertToListOfPostDto (PageRequest pageReq){
+	@Async("processExecutor")
+	public CompletableFuture<List<PostDto>> getListAndConvertToListOfPostDto (PageRequest pageReq){
 		Page<Post> posts = lostFoundRepository.findAll(pageReq);
-		return posts.getContent().stream()
-				.map(this::convertPostToPostDto)
-				.collect(Collectors.toList());
+		return CompletableFuture.supplyAsync(() -> {
+	    	return posts.getContent().stream()
+					.map(this::convertPostToPostDto)
+					.collect(Collectors.toList());
+	    });
 	}
 		
 	@Async("processExecutor")
@@ -75,7 +78,22 @@ public class LostFoundUtil implements Serializable {
 		}
 	}
 	
-	public ResponseEntity<String> savePostInSearchingServiceDB (Post post) {
+	@Async("processExecutor")
+	public CompletableFuture<Post> savePostInDatabase(Post post) {
+	    return CompletableFuture.supplyAsync(() -> {
+	    	return lostFoundRepository.save(post);
+	    });
+	}
+	
+	@Async("processExecutor")
+	public CompletableFuture<Void> deletePostFromDatabase(Post post) {
+	    return CompletableFuture.runAsync(() -> {
+	    	lostFoundRepository.delete(post);
+	    });
+	}
+	
+	@Async("processExecutor")
+	public CompletableFuture<String> savePostInSearchingServiceDB (Post post) {
 		PostToConvertDto body = convertPostToPostToConvertDto (post);
 
 		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
@@ -87,7 +105,7 @@ public class LostFoundUtil implements Serializable {
 			BodyBuilder requestBodyBuilder = RequestEntity.method(HttpMethod.POST, URI.create(url)).headers(newHeaders);
 			RequestEntity<PostToConvertDto> request = requestBodyBuilder.body(body);
 			ResponseEntity<String> newResponse = restTemplate.exchange(request, String.class);
-			return newResponse;
+			return CompletableFuture.completedFuture(newResponse.getBody());
 		} catch (HttpClientErrorException e) {
 			throw new RuntimeException("Saving post is failed");
 		}

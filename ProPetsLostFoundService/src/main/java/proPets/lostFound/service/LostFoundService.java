@@ -2,6 +2,8 @@ package proPets.lostFound.service;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.DataFormatException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,13 +15,15 @@ import proPets.lostFound.dto.UserRemoveDto;
 
 public interface LostFoundService {
 
-	List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException;
+	List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException, InterruptedException, ExecutionException;
 
 	List<PostDto> removePost(String currentUserId, String postId, String flag) throws Throwable;
 
 	List<PostDto> editPost(String currentUserId, PostEditDto postEditDto, String postId, String flag) throws URISyntaxException, JsonProcessingException, DataFormatException;
 
-	List<PostDto> getPostsFeed(int page, String flag);
+	CompletableFuture<List<PostDto>> getPostsFeed(int page, String flag);
+	
+	//List<PostDto> getPostsFeed(int page, String flag);
 
 	List<PostDto> getPostsFeedMatchingByType(int page, String type, String flag);
 
