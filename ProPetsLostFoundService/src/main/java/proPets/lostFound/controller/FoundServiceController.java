@@ -94,8 +94,8 @@ public class FoundServiceController {
 	@GetMapping("/post/feed/features")
 	public List<PostDto> getUserPostFeedMatchingByFeatures(
 			@RequestHeader(value = "Authorization") String authorization, @RequestParam("page") int page,
-			@RequestParam("address") String address) {
-		return lostFoundService.getPostsFeedMatchingByFeatures(page, address, flag);
+			@RequestParam("features") String features) {
+		return lostFoundService.getPostsFeedMatchingByFeatures(page, features, flag);
 	}
 
 	// TODO!!! убрать из фильтра валидации этот эндпоинт

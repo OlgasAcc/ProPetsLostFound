@@ -9,8 +9,6 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import lombok.extern.slf4j.Slf4j;
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dto.PostMQDto;
@@ -35,10 +33,5 @@ public class LostFoundDataExchangeService {
 	                .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
 	                .build());
 	    });
-        
-//        messageChannel.send(MessageBuilder
-//                .withPayload(postMQDto)
-//                .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
-//                .build());
 	}
 }

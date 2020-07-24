@@ -4,7 +4,6 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
@@ -14,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.expression.AccessException;
-import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.stereotype.Service;
 
@@ -81,37 +79,28 @@ public class LostFoundServiceImpl implements LostFoundService {
 				.authorData(authorData)
 				.dateOfPublish(LocalDateTime.now())
 				.build();
-		//post = lostFoundRepository.save(post);
 		
 		CompletableFuture<List<PostDto>> result = lostFoundUtil.savePostInDatabase(post)
 		        .thenApply(p -> lostFoundUtil.savePostInSearchingServiceDB(post))
-		        .thenCompose(p->dataService.sendPostData(post.getId()))
-		        .thenComposeAsync(p->getPostsFeed(0, flag));
+		        .thenCompose(p -> dataService.sendPostData(post.getId()))
+		        .thenComposeAsync(p -> getPostsFeed(0, flag));
 		
 		return result.get();
-		//if (lostFoundUtil.savePostInSearchingServiceDB(post).getStatusCode() == HttpStatus.OK) {
-		//	// Kafka
-		//	dataService.sendPostData(post.getId());
-		//}
-		//return getPostsFeed(0, flag);
 	}
 	
 	@Override
 	public List<PostDto> removePost(String currentUserId, String postId, String flag) throws Throwable {
-		Post post = lostFoundRepository.findById(postId).orElseThrow(() -> new PostNotFoundException());
-		if (currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
-			CompletableFuture<List<PostDto>> result = lostFoundUtil.deletePostFromDatabase(post)
-					.thenApply(p -> lostFoundUtil.removePostInSearchingServiceDB(postId))
-					.thenComposeAsync(p -> getPostsFeed(0, flag));
-			return result.get();
-
-			// lostFoundRepository.delete(post);
-			// lostFoundUtil.removePostInSearchingServiceDB(postId);
-			// return getPostsFeed(0, flag);
-			
-		} else {
+		System.out.println(postId);
+		Post post = lostFoundRepository.findById(postId).get();
+		System.out.println(post.getId());
+		if (!currentUserId.equalsIgnoreCase(post.getAuthorData().getAuthorId())) {
 			throw new AccessException("Access denied: you'r not author!");
-		}			
+		} else {
+		CompletableFuture<List<PostDto>> result = lostFoundUtil.deletePostFromDatabase(post)
+				.thenApply(p -> lostFoundUtil.removePostInSearchingServiceDB(postId))
+				.thenComposeAsync(p -> getPostsFeed(0, flag));
+		return result.get();
+		}		
 	}
 	
 	@Override
@@ -130,13 +119,12 @@ public class LostFoundServiceImpl implements LostFoundService {
 				post.getAuthorData().setFb_link(postEditDto.getFb_link() != null ? postEditDto.getFb_link(): post.getAuthorData().getFb_link());
 				post.setDateOfPublish(LocalDateTime.now());
 				
-				lostFoundRepository.save(post);
-				lostFoundUtil.savePostInSearchingServiceDB (post); // отправить в Серчинг запрос на редактирование, дождаться ответа				
-				//Kafka
-				dataService.sendPostData(post.getId());	
-				return null;
-				//NEED BE UPDATED!!!! 
-				//return getPostsFeed(0, flag);
+				CompletableFuture<List<PostDto>> result = lostFoundUtil.savePostInDatabase(post)
+				        .thenApply(p -> lostFoundUtil.savePostInSearchingServiceDB(post))
+				        .thenCompose(p -> dataService.sendPostData(post.getId()))
+				        .thenComposeAsync(p -> getPostsFeed(0, flag));
+				
+				return result.get();
 			} else
 				throw new AccessException("Access denied: you'r not author!");
 		} catch (Exception e) {
@@ -181,8 +169,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 	}
 	
 	@Override
-	public List<PostDto> getPostsFeedMatchingByFeatures(int page, String postId, String flag) {
-		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByDistFeatures(postId, flag));		
+	public List<PostDto> getPostsFeedMatchingByFeatures(int page, String features, String flag) {
+		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByDistFeatures(features, flag));		
 		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds,page);
 	}
 	

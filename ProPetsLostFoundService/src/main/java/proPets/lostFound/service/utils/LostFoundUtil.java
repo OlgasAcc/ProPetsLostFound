@@ -170,7 +170,7 @@ public class LostFoundUtil implements Serializable {
 		}
 	}
 	
-	public String[] getListOfPostIdByDistFeatures(String postId, String flag) {
+	public String[] getListOfPostIdByDistFeatures(String features, String flag) {
 		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
@@ -178,7 +178,7 @@ public class LostFoundUtil implements Serializable {
 
 			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/features"; //to Searching service
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("postId",postId)
+					.queryParam("features",features)
 					.queryParam("flag", flag);
 			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
