@@ -84,7 +84,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 		//post = lostFoundRepository.save(post);
 		
 		CompletableFuture<List<PostDto>> result = lostFoundUtil.savePostInDatabase(post)
-		        .thenApply(p -> lostFoundUtil.savePostInSearchingServiceDB(post))		        
+		        .thenApply(p -> lostFoundUtil.savePostInSearchingServiceDB(post))
+		        .thenCompose(p->dataService.sendPostData(post.getId()))
 		        .thenComposeAsync(p->getPostsFeed(0, flag));
 		
 		return result.get();

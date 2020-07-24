@@ -1,5 +1,7 @@
 package proPets.lostFound.service;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHeaders;
@@ -23,13 +25,20 @@ public class LostFoundDataExchangeService {
 	@Autowired
 	DataExchange dataExchange;
 
-	public void sendPostData(String postId) throws JsonProcessingException {
+	public CompletableFuture<Void> sendPostData(String postId) {
 		PostMQDto postMQDto = new PostMQDto(postId);
 		log.info("Sending greetings {}", dataExchange);
         MessageChannel messageChannel = dataExchange.outboundPost();
-        messageChannel.send(MessageBuilder
-                .withPayload(postMQDto)
-                .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
-                .build());
+        return CompletableFuture.runAsync(() -> {
+	    	messageChannel.send(MessageBuilder
+	                .withPayload(postMQDto)
+	                .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
+	                .build());
+	    });
+        
+//        messageChannel.send(MessageBuilder
+//                .withPayload(postMQDto)
+//                .setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON)
+//                .build());
 	}
 }

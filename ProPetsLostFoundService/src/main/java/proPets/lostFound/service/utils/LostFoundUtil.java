@@ -96,7 +96,7 @@ public class LostFoundUtil implements Serializable {
 	public CompletableFuture<String> savePostInSearchingServiceDB (Post post) {
 		PostToConvertDto body = convertPostToPostToConvertDto (post);
 
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 
 		String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/post"; //to Searching service
 		try {
