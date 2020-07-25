@@ -47,8 +47,8 @@ public class AccessCodeValidationFilter implements Filter {
 	}
 
 	private boolean checkStartPath(String path) {
-		boolean check = path.startsWith("/lost/v1/all_matched") || path.startsWith("lost/v1/new_matched");
-		check = check || path.startsWith("/found/v1/all_matched") || path.startsWith("found/v1/new_matched");
+		boolean check = path.startsWith("/lostFound/lost/v1/all_matched") || path.startsWith("/lostFoundlost/v1/new_matched");
+		check = check || path.startsWith("/lostFound/found/v1/all_matched") || path.startsWith("/lostFoundfound/v1/new_matched");
 		return check;
 	}
 

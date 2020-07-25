@@ -145,7 +145,9 @@ public class LostFoundUtil implements Serializable {
 		List<Post> list = lostFoundRepository.findAll().stream()
 				.filter(p->postIds.contains(p.getId()))
 				.collect(Collectors.toList());
+		System.out.println(list.toArray());
 		Page<Post> posts = new PageImpl<Post>(list, pageReq, quantity);
+		System.out.println(posts.getContent().toArray());
 		return posts.getContent()
 				.stream()
 				.map(p -> convertPostToPostDto(p))
@@ -153,7 +155,7 @@ public class LostFoundUtil implements Serializable {
 	}
 	
 	public String[] getListOfPostIdByAddress(String address, String flag) {
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
@@ -171,7 +173,7 @@ public class LostFoundUtil implements Serializable {
 	}
 	
 	public String[] getListOfPostIdByDistFeatures(String features, String flag) {
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");

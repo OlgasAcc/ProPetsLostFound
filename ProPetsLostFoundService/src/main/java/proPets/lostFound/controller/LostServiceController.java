@@ -103,7 +103,7 @@ public class LostServiceController {
 
 	@GetMapping("/all_matched")
 	public List<PostDto> getFeedOfMatchingPosts(@RequestParam("page") int page,
-			@RequestParam("postId") String postId) throws Throwable {
+			@RequestParam("postId") String postId, @RequestParam("accessCode") String accessCode) throws Throwable {
 		return lostFoundService.getFeedOfMatchingPosts(page, postId);
 	}
 
@@ -112,13 +112,12 @@ public class LostServiceController {
 	// (переход по ссылке на фронт - оттуда - запрос сюда)
 
 	@GetMapping("/new_matched")
-	public PostDto getNewMatchedPost(@RequestParam("postId") String postId) throws Throwable {
+	public PostDto getNewMatchedPost(@RequestParam("postId") String postId, @RequestParam("accessCode") String accessCode) throws Throwable {
 		return lostFoundService.getNewMatchedPost(postId);
 	}
 
 	// for front: this request is working with "remove user" in Accounting service:
 	// it is cleaning the "tail of removed user" AFTER removing the user from
-
 	@DeleteMapping("/post/cleaner")
 	public String cleanPostsOfRemovedUser(@RequestBody UserRemoveDto userRemoveDto) {
 		return lostFoundService.cleanPostsOfRemovedUser(userRemoveDto);
