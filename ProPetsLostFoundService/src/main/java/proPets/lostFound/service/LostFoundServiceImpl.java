@@ -171,7 +171,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Override
 	public List<PostDto> getPostsFeedMatchingByFeatures(int page, String features, String flag) {
 		List<String> postIds = lostFoundUtil.convertArrayToList(lostFoundUtil.getListOfPostIdByDistFeatures(features, flag));		
-		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds,page);
+		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds, page);
 	}
 	
 	

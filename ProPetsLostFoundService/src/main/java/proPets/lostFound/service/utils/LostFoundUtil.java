@@ -180,7 +180,7 @@ public class LostFoundUtil implements Serializable {
 
 			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/features"; //to Searching service
 			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("features",features)
+					.queryParam("features", features)
 					.queryParam("flag", flag);
 			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
