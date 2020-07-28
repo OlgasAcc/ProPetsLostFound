@@ -14,11 +14,9 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,8 +25,9 @@ import org.springframework.web.client.RestTemplate;
 import proPets.lostFound.configuration.LostFoundConfiguration;
 import proPets.lostFound.dto.AuthResponse;
 
-@Component
-@Order(20)
+//@Component
+//@Order(20)
+// disabled - in zuul service now
 
 public class JWTValidationFilter implements Filter {
 
