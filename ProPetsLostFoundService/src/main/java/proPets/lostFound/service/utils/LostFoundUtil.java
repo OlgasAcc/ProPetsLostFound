@@ -1,6 +1,5 @@
 package proPets.lostFound.service.utils;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,15 +30,13 @@ import proPets.lostFound.dto.SearchResponseDto;
 import proPets.lostFound.model.Post;
 
 @Component
-public class LostFoundUtil implements Serializable {
+public class LostFoundUtil {
 
 	@Autowired
 	LostFoundMongoRepository lostFoundRepository;
 	
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
-
-	private static final long serialVersionUID = -2550185165626007488L;
 	
 	public PostToConvertDto convertPostToPostToConvertDto (Post post) {
 		return PostToConvertDto.builder()
