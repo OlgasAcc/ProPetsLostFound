@@ -92,7 +92,7 @@ public class LostFoundUtil {
 	@Async("processExecutor")
 	public CompletableFuture<String> savePostInSearchingServiceDB (Post post) {
 		PostToConvertDto body = convertPostToPostToConvertDto (post);
-
+System.out.println("im saving post");
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 
 		String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/post"; //to Searching service
