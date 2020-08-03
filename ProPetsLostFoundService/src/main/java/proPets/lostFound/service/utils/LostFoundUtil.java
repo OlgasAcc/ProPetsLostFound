@@ -7,10 +7,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -133,23 +132,6 @@ System.out.println("im saving post");
 				.build();
 	}
 	
-	public List<PostDto> getListOfPostDtoByListOfPostIds (List<String>postIds, int page){
-		int quantity = lostFoundConfiguration.getQuantity();
-		//Query query = new Query();
-		//query.addCriteria(Criteria.where("id").in(postIds));
-		PageRequest pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
-		
-		List<Post> list = lostFoundRepository.findAll().stream()
-				.filter(p->postIds.contains(p.getId()))
-				.collect(Collectors.toList());
-		System.out.println(list.toArray());
-		Page<Post> posts = new PageImpl<Post>(list, pageReq, quantity);
-		System.out.println(posts.getContent().toArray());
-		return posts.getContent()
-				.stream()
-				.map(p -> convertPostToPostDto(p))
-				.collect(Collectors.toList());
-	}
 	
 	public String[] getListOfPostIdByAddress(String address, String flag) {
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
@@ -203,7 +185,35 @@ System.out.println("im saving post");
 		} catch (HttpClientErrorException e) {
 			throw new RuntimeException("Searching posts is failed");
 		}
-	}	
+	}
+	
+	public List<PostDto> getListOfPostDtoByListOfPostIds (List<String>postIds, int page){
+		int quantity = lostFoundConfiguration.getQuantity();	
+		List<PostDto> list = createPageListHolder(postIds, page, quantity).getPageList();		
+		return list;
+	}
+	
+	public List<PostDto> getUpdatedFilteredPostFeed(List<String>postIds) {
+		List<PostDto> list = lostFoundRepository.findAll().stream()
+				.filter(p->postIds.contains(p.getId()))
+				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
+				.map(p -> convertPostToPostDto(p))
+				.collect(Collectors.toList());
+		return list;
+	}
+
+	public PagedListHolder<PostDto> createPageListHolder(List<String> postIds, int page, int quantity) {
+		List<PostDto> list = getUpdatedFilteredPostFeed(postIds);
+		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<>(list);
+		pagedListHolder.setPage(page);
+		pagedListHolder.setPageSize(quantity);
+		return pagedListHolder;
+	}
 }
+
+
+//Query query = new Query();
+//query.addCriteria(Criteria.where("id").in(postIds));
+//Pageable pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
 
 

@@ -1,6 +1,7 @@
 package proPets.lostFound.dao;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,7 @@ public interface LostFoundMongoRepository extends MongoRepository<Post, String> 
 	
 	List<Post> findAll();
 	
-	Page<Post> findAll(Pageable pageReq);
+	Stream<Post>findByAuthorDataAuthorId(String authorId);
 	
 	//Page<Post> findAll(Query query, Pageable pageReq);
 

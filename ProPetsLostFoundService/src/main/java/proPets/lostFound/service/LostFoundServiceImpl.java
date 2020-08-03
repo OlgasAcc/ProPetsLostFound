@@ -178,9 +178,8 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Override
 	public String cleanPostsOfRemovedUser(UserRemoveDto userRemoveDto) {
 		String authorId = userRemoveDto.getUserId();
-		lostFoundRepository.findAll().stream()
-					.filter(p->p.getAuthorData().getAuthorId().equalsIgnoreCase(authorId))
-					.forEach(post->lostFoundRepository.delete(post));	
+		lostFoundRepository.findByAuthorDataAuthorId(authorId)
+							.forEach(i -> lostFoundRepository.delete(i));	
 		return authorId;
 	}
 	
