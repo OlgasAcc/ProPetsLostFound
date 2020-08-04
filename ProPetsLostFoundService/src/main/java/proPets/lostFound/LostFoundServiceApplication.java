@@ -8,10 +8,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableDiscoveryClient
 @SpringBootApplication
 @EnableAsync
+
 public class LostFoundServiceApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(LostFoundServiceApplication.class, args);
 	}
-
 }

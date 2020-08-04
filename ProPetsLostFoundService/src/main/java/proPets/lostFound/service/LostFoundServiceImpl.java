@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.expression.AccessException;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -196,6 +197,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 		return lostFoundUtil.getListOfPostDtoByListOfPostIds(postIds,page);
 	}
 
+	@Transactional
 	@Override
 	public void saveAccessCode(String accessCode) {
 		AccessCode newCode = new AccessCode(accessCode);
