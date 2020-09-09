@@ -1,4 +1,4 @@
-package proPets.lostFound.model;
+package proPets.lostFound.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

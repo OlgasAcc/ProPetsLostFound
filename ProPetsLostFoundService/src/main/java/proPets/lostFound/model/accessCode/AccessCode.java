@@ -1,4 +1,4 @@
-package proPets.lostFound.model;
+package proPets.lostFound.model.accessCode;
 
 import java.io.Serializable;
 
@@ -35,5 +35,38 @@ public class AccessCode implements Serializable{
 	
 	@Id
 	String accCode;
+
+
+	
+	
+	/*@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof AccessCode)) {
+			return false;
+		}
+		AccessCode other = (AccessCode) obj;
+		if (accCode == null) {
+			if (other.accCode != null) {
+				return false;
+			}
+		} else if (!accCode.equals(other.accCode)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((accCode == null) ? 0 : accCode.hashCode());
+		return result;
+	}*/
 	
 }

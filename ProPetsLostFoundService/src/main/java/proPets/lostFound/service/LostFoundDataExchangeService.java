@@ -25,7 +25,7 @@ public class LostFoundDataExchangeService {
 
 	public CompletableFuture<Void> sendPostData(String postId) {
 		PostMQDto postMQDto = new PostMQDto(postId);
-		log.info("Sending greetings {}", dataExchange);
+		log.info("sending...", dataExchange);
         MessageChannel messageChannel = dataExchange.outboundPost();
         return CompletableFuture.runAsync(() -> {
 	    	messageChannel.send(MessageBuilder

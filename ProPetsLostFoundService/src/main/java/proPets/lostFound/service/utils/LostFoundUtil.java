@@ -22,11 +22,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
-import proPets.lostFound.dao.LostFoundMongoRepository;
+import proPets.lostFound.dao.mongoDB.LostFoundMongoRepository;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostToConvertDto;
 import proPets.lostFound.dto.SearchResponseDto;
-import proPets.lostFound.model.Post;
+import proPets.lostFound.model.post.Post;
 
 @Component
 public class LostFoundUtil {

@@ -15,16 +15,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import proPets.lostFound.dao.LostFoundJPARepository;
-import proPets.lostFound.model.AccessCode;
+import proPets.lostFound.dao.postgreSQL.LostFoundPostgreSQLRepository;
+import proPets.lostFound.model.accessCode.AccessCode;
 
 @Component
-@Order(30)
+@Order(10)
 
 public class AccessCodeValidationFilter implements Filter {
 
 	@Autowired
-	LostFoundJPARepository lostFoundJPARepository;
+	LostFoundPostgreSQLRepository lostFoundJPARepository;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)

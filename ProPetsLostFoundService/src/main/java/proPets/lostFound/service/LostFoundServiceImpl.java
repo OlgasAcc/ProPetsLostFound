@@ -13,23 +13,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.expression.AccessException;
-import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import proPets.lostFound.configuration.LostFoundConfiguration;
-import proPets.lostFound.dao.LostFoundJPARepository;
-import proPets.lostFound.dao.LostFoundMongoRepository;
+import proPets.lostFound.dao.mongoDB.LostFoundMongoRepository;
+import proPets.lostFound.dao.postgreSQL.LostFoundPostgreSQLRepository;
+import proPets.lostFound.dto.AuthorData;
 import proPets.lostFound.dto.NewPostDto;
 import proPets.lostFound.dto.PostDto;
 import proPets.lostFound.dto.PostEditDto;
 import proPets.lostFound.dto.UserRemoveDto;
 import proPets.lostFound.exceptions.PostNotFoundException;
-import proPets.lostFound.model.AccessCode;
-import proPets.lostFound.model.AuthorData;
-import proPets.lostFound.model.Post;
+import proPets.lostFound.model.accessCode.AccessCode;
+import proPets.lostFound.model.post.Post;
 import proPets.lostFound.service.utils.LostFoundUtil;
 
 @Service
@@ -39,7 +38,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 	LostFoundMongoRepository lostFoundRepository;
 	
 	@Autowired
-	LostFoundJPARepository lostFoundJPARepository;
+	LostFoundPostgreSQLRepository lostFoundPostgreSQLRepository;
 
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
@@ -50,11 +49,9 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Autowired
 	LostFoundDataExchangeService dataService;
 	
-	//@PersistenceContext
-	//EntityManager entityManager;
 	
-	@Autowired
-	JpaTransactionManager jpaTransactionManager;
+//	@Autowired
+//	JpaTransactionManager jpaTransactionManager;
 	
 	@Override
 	public List<PostDto> addPost(String currentUserId, NewPostDto newPostDto, String flag) throws URISyntaxException, JsonProcessingException, InterruptedException, ExecutionException {
@@ -201,6 +198,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Override
 	public void saveAccessCode(String accessCode) {
 		AccessCode newCode = new AccessCode(accessCode);
-		lostFoundJPARepository.save(newCode);		
+		lostFoundPostgreSQLRepository.save(newCode);		
 	}
 }

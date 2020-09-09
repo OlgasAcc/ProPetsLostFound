@@ -1,4 +1,4 @@
-package proPets.lostFound.dao;
+package proPets.lostFound.dao.mongoDB;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import proPets.lostFound.model.Post;
+import proPets.lostFound.model.post.Post;
 
 public interface LostFoundMongoRepository extends MongoRepository<Post, String> {
 	

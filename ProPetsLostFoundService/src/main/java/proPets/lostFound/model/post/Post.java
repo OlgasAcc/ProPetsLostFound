@@ -1,6 +1,8 @@
-package proPets.lostFound.model;
+package proPets.lostFound.model.post;
 
 import java.time.LocalDateTime;
+
+import javax.persistence.Entity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -14,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import proPets.lostFound.dto.AuthorData;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,6 +26,7 @@ import lombok.ToString;
 @ToString
 @Document(collection = "all_posts_lost_found")
 @Builder
+@Entity
 
 public class Post {
 

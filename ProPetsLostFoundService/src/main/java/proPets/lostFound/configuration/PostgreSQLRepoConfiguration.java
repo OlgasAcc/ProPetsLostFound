@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
 @PropertySource({ "classpath:application.properties" })
-@EnableJpaRepositories(basePackages = "proPets.lostFound.dao.LostFoundJPARepository", transactionManagerRef = "transactionManager")
+@EnableJpaRepositories(basePackages = "proPets.lostFound.dao.postgreSQL", transactionManagerRef = "transactionManager")
 @EnableTransactionManagement
 
 public class PostgreSQLRepoConfiguration {
@@ -28,7 +28,7 @@ public class PostgreSQLRepoConfiguration {
 	@Autowired
 	private Environment env;
 	
-	private static final String[] ENTITYMANAGER_PACKAGES_TO_SCAN = { "proPets.lostFound.model" };
+	private static final String[] ENTITYMANAGER_PACKAGES_TO_SCAN = { "proPets.lostFound.model.accessCode" };
 
 	@Bean
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {

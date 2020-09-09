@@ -13,7 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import proPets.lostFound.model.Post;
+import proPets.lostFound.model.post.Post;
 
 @Configuration
 @RefreshScope
