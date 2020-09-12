@@ -7,9 +7,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
@@ -33,11 +34,11 @@ public class LostFoundUtil {
 
 	@Autowired
 	LostFoundMongoRepository lostFoundRepository;
-	
+
 	@Autowired
 	LostFoundConfiguration lostFoundConfiguration;
-	
-	public PostToConvertDto convertPostToPostToConvertDto (Post post) {
+
+	public PostToConvertDto convertPostToPostToConvertDto(Post post) {
 		return PostToConvertDto.builder()
 				.id(post.getId())
 				.flag(post.getFlag())
@@ -48,17 +49,15 @@ public class LostFoundUtil {
 				.picturesURLs(post.getPicturesURLs())
 				.build();
 	}
-	
+
 	@Async("processExecutor")
-	public CompletableFuture<List<PostDto>> getListAndConvertToListOfPostDto (PageRequest pageReq){
+	public CompletableFuture<List<PostDto>> getListAndConvertToListOfPostDto(PageRequest pageReq) {
 		Page<Post> posts = lostFoundRepository.findAll(pageReq);
 		return CompletableFuture.supplyAsync(() -> {
-	    	return posts.getContent().stream()
-					.map(this::convertPostToPostDto)
-					.collect(Collectors.toList());
-	    });
+			return posts.getContent().stream().map(this::convertPostToPostDto).collect(Collectors.toList());
+		});
 	}
-		
+
 	@Async("processExecutor")
 	public CompletableFuture<String> removePostInSearchingServiceDB(String postId) {
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
@@ -73,28 +72,28 @@ public class LostFoundUtil {
 			throw new RuntimeException("Removing post is failed");
 		}
 	}
-	
+
 	@Async("processExecutor")
 	public CompletableFuture<Post> savePostInDatabase(Post post) {
-	    return CompletableFuture.supplyAsync(() -> {
-	    	return lostFoundRepository.save(post);
-	    });
+		return CompletableFuture.supplyAsync(() -> {
+			return lostFoundRepository.save(post);
+		});
 	}
-	
+
 	@Async("processExecutor")
 	public CompletableFuture<Void> deletePostFromDatabase(Post post) {
-	    return CompletableFuture.runAsync(() -> {
-	    	lostFoundRepository.delete(post);
-	    });
+		return CompletableFuture.runAsync(() -> {
+			lostFoundRepository.delete(post);
+		});
 	}
-	
+
 	@Async("processExecutor")
-	public CompletableFuture<String> savePostInSearchingServiceDB (Post post) {
-		PostToConvertDto body = convertPostToPostToConvertDto (post);
-System.out.println("im saving post");
+	public CompletableFuture<String> savePostInSearchingServiceDB(Post post) {
+		PostToConvertDto body = convertPostToPostToConvertDto(post);
+		System.out.println("im saving post");
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 
-		String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/post"; //to Searching service
+		String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/post"; // to Searching service
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
@@ -106,15 +105,15 @@ System.out.println("im saving post");
 			throw new RuntimeException("Saving post is failed");
 		}
 	}
-		
-	public List<String> convertArrayToList(String[] array){
-		 List<String> collection = new ArrayList<>();
+
+	public List<String> convertArrayToList(String[] array) {
+		List<String> collection = new ArrayList<>();
 		for (int i = 0; i < array.length; i++) {
 			collection.add(array[i]);
 		}
-		 return collection;
+		return collection;
 	}
-	
+
 	public PostDto convertPostToPostDto(Post post) {
 		return PostDto.builder()
 				.id(post.getId())
@@ -131,17 +130,15 @@ System.out.println("im saving post");
 				.dateOfPublish(post.getDateOfPublish())
 				.build();
 	}
-	
-	
+
 	public String[] getListOfPostIdByAddress(String address, String flag) {
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
 
-			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/location"; //to Searching service
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("address", address)
+			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/location"; // to Searching service
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("address", address)
 					.queryParam("flag", flag);
 			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
@@ -150,16 +147,15 @@ System.out.println("im saving post");
 			throw new RuntimeException("Searching post is failed");
 		}
 	}
-	
+
 	public String[] getListOfPostIdByDistFeatures(String features, String flag) {
 		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
 
-			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/features"; //to Searching service
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("features", features)
+			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/features"; // to Searching service
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("features", features)
 					.queryParam("flag", flag);
 			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
@@ -170,14 +166,13 @@ System.out.println("im saving post");
 	}
 
 	public String[] getListOfMatchedPostId(String postId, String flag) {
-		RestTemplate restTemplate =lostFoundConfiguration.restTemplate();
+		RestTemplate restTemplate = lostFoundConfiguration.restTemplate();
 		try {
 			HttpHeaders newHeaders = new HttpHeaders();
 			newHeaders.add("Content-Type", "application/json");
 
-			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/all_matched"; //to Searching service
-			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-					.queryParam("postId",postId)
+			String url = lostFoundConfiguration.getBaseSearchUrl() + "search/v1/all_matched"; // to Searching service
+			UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url).queryParam("postId", postId)
 					.queryParam("flag", flag);
 			RequestEntity<String> request = new RequestEntity<String>(HttpMethod.GET, builder.build().toUri());
 			ResponseEntity<SearchResponseDto> newResponse = restTemplate.exchange(request, SearchResponseDto.class);
@@ -186,34 +181,26 @@ System.out.println("im saving post");
 			throw new RuntimeException("Searching posts is failed");
 		}
 	}
-	
-	public List<PostDto> getListOfPostDtoByListOfPostIds (List<String>postIds, int page){
-		int quantity = lostFoundConfiguration.getQuantity();	
-		List<PostDto> list = createPageListHolder(postIds, page, quantity).getPageList();		
+
+	public List<PostDto> getListOfPostDtoByListOfPostIds(List<String> postIds, int page) {
+		int quantity = lostFoundConfiguration.getQuantity();
+		List<PostDto> list = getUpdatedFilteredPostFeed(postIds, quantity,page);
 		return list;
 	}
-	
-	public List<PostDto> getUpdatedFilteredPostFeed(List<String>postIds) {
-		List<PostDto> list = lostFoundRepository.findAll().stream()
-				.filter(p->postIds.contains(p.getId()))
-				.sorted((p1,p2)->p2.getDateOfPublish().compareTo(p1.getDateOfPublish()))
-				.map(p -> convertPostToPostDto(p))
+
+	public List<PostDto> getUpdatedFilteredPostFeed(List<String> postIds, int quantity, int page) {	
+		Pageable pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
+		Page<Post>posts = lostFoundRepository.findByIdIn(postIds, pageReq);		
+		List<PostDto> list = posts.getContent().stream()
+				.map(this::convertPostToPostDto)
 				.collect(Collectors.toList());
 		return list;
 	}
 
-	public PagedListHolder<PostDto> createPageListHolder(List<String> postIds, int page, int quantity) {
-		List<PostDto> list = getUpdatedFilteredPostFeed(postIds);
-		PagedListHolder<PostDto> pagedListHolder = new PagedListHolder<>(list);
-		pagedListHolder.setPage(page);
-		pagedListHolder.setPageSize(quantity);
-		return pagedListHolder;
-	}
 }
 
-
 //Query query = new Query();
-//query.addCriteria(Criteria.where("id").in(postIds));
-//Pageable pageReq = PageRequest.of(page, quantity, Sort.Direction.DESC, "dateOfPublish");
-
+//Criteria first = Criteria.where("id").in(postIds);
+//query.addCriteria(first);
+//System.out.println(query.toString());
 

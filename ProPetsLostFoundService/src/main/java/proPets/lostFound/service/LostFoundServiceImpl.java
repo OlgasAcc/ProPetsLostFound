@@ -49,7 +49,6 @@ public class LostFoundServiceImpl implements LostFoundService {
 	@Autowired
 	LostFoundDataExchangeService dataService;
 	
-	
 //	@Autowired
 //	JpaTransactionManager jpaTransactionManager;
 	
@@ -81,8 +80,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 		CompletableFuture<List<PostDto>> result = lostFoundUtil.savePostInDatabase(post)
 		        .thenCompose(p -> lostFoundUtil.savePostInSearchingServiceDB(post))
 		        .thenCompose(p -> dataService.sendPostData(post.getId()))
-		        .thenComposeAsync(p -> getPostsFeed(0, flag));
-		
+		        .thenComposeAsync(p -> getPostsFeed(0, flag));		
 		return result.get();
 	}
 	
@@ -120,8 +118,7 @@ public class LostFoundServiceImpl implements LostFoundService {
 				CompletableFuture<List<PostDto>> result = lostFoundUtil.savePostInDatabase(post)
 				        .thenApply(p -> lostFoundUtil.savePostInSearchingServiceDB(post))
 				        .thenCompose(p -> dataService.sendPostData(post.getId()))
-				        .thenComposeAsync(p -> getPostsFeed(0, flag));
-				
+				        .thenComposeAsync(p -> getPostsFeed(0, flag));				
 				return result.get();
 			} else
 				throw new AccessException("Access denied: you'r not author!");

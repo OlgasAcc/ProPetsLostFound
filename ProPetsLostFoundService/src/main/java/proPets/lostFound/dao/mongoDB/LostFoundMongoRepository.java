@@ -6,16 +6,17 @@ import java.util.stream.Stream;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import proPets.lostFound.model.post.Post;
 
+@Repository
 public interface LostFoundMongoRepository extends MongoRepository<Post, String> {
-	
-	List<Post> findAll();
+		
+	//@Query("{ \"_id\" : { \"$in\" : [\"?0\"]}}")
+	Page<Post> findByIdIn(List<String> postIds, Pageable pageReq);
 	
 	Stream<Post>findByAuthorDataAuthorId(String authorId);
-	
-	//Page<Post> findAll(Query query, Pageable pageReq);
 
 	Page<Post> findByTypeLikeAndFlagLike(String type, String flag, Pageable pageReq);
 	
